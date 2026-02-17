@@ -61,9 +61,32 @@ dependencies {
 
 
     implementation(libs.retrofit)
-    implementation(libs.converter.moshi)
-    implementation(libs.logging.interceptor)
     implementation(libs.converter.gson)
+
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
+    // Network
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+
+    implementation("androidx.room:room-ktx:$room_version")
+
+
+
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    implementation(libs.glide.compose)
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
 
 
 }

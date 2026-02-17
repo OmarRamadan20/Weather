@@ -5,6 +5,7 @@ import android.os.Parcelable
 import com.example.weather.data.models.weather.Clouds
 import com.example.weather.data.models.weather.Main
 import com.example.weather.data.models.weather.WeatherItem
+import com.example.weather.data.models.weather.Wind
 import com.google.gson.annotations.SerializedName
 
 @Parcelize

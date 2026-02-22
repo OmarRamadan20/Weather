@@ -38,27 +38,44 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WeatherRoute(viewModel: HomeViewModel) {
-    val uiState by viewModel.weatherState.collectAsState()
+    val weatherState by viewModel.weatherState.collectAsState()
+    val forecastState by viewModel.forecastState.collectAsState()
+
 
     LaunchedEffect(Unit) {
-        viewModel.fetchWeather(lat = 52.5200, lon = 13.4050)
+        viewModel.fetchWeather(lat = 52.5200, lon = 13.4050,city = "Berlin")
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is MyResult.Loading -> {
+
+        when {
+            weatherState is MyResult.Loading || forecastState is MyResult.Loading -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
 
-            is MyResult.Success -> {
-                WeatherScreen(weatherData = state.data)
+            weatherState is MyResult.Success && forecastState is MyResult.Success -> {
+                val weatherData = (weatherState as MyResult.Success).data
+                val forecastData = (forecastState as MyResult.Success).data
+
+                WeatherScreen(
+                    weatherData = weatherData,
+                    forecastData = forecastData
+                )
             }
 
-            is MyResult.Error -> {
-                Text(text = "Error: ${state.message}", modifier = Modifier.align(Alignment.Center))
+            weatherState is MyResult.Error -> {
+                Text(
+                    text = "Weather Error: ${(weatherState as MyResult.Error).message}",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            forecastState is MyResult.Error -> {
+                Text(
+                    text = "Forecast Error: ${(forecastState as MyResult.Error).message}",
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
-
     }
 }
-

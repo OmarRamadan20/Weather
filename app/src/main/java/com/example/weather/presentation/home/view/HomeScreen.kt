@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,10 +31,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.weather.data.models.forecast.ForecastResponse
+import com.example.weather.data.models.forecast.ListItem
+import com.example.weather.data.models.weather.Main
+import com.example.weather.data.models.weather.Sys
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weather.data.models.weather.Wind
 
 @Composable
-fun WeatherScreen(weatherData: WeatherResponse) {
+fun WeatherScreen(weatherData: WeatherResponse,forecastData: ForecastResponse) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -43,6 +50,10 @@ fun WeatherScreen(weatherData: WeatherResponse) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         MainWeatherCard(weatherData)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        HourlyWeatherList(hourlyData = forecastData.list?: emptyList())
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -72,13 +83,18 @@ fun MainWeatherCard(weather: WeatherResponse) {
                 modifier = Modifier.fillMaxSize().padding(16.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(modifier = Modifier.fillMaxWidth()
+                    , horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("09-02-2026", color = Color.White)
                     Text("08:00 AM", color = Color.White)
                 }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Text("${weather.main?.temp?.toInt() ?: 0}", fontSize = 64.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                Column(horizontalAlignment = Alignment.CenterHorizontally
+                    , modifier = Modifier.fillMaxWidth()) {
+                    Text("${weather.main?.temp?.toInt() ?: 0}"
+                        , fontSize = 64.sp
+                        , color = Color.White
+                        , fontWeight = FontWeight.Bold)
                     Text("(Celsius)", color = Color.White)
                 }
 
@@ -90,7 +106,8 @@ fun MainWeatherCard(weather: WeatherResponse) {
 
 @Composable
 fun WeatherDetailSection(title: String, icon: Painter, labels: List<String>, values: List<String>) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        , verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
         Spacer(modifier = Modifier.width(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -148,6 +165,37 @@ fun WeatherDetailGrid(weather: WeatherResponse) {
     }
 }
 
+@Composable
+fun HourlyWeatherItem(time: String, temp: String, iconCode: String) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .width(80.dp)
+            .padding(horizontal = 4.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(text = time, fontSize = 12.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            AsyncImage(
+                model = "https://openweathermap.org/img/wn/$iconCode@2x.png",
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "$temp°", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        }
+    }
+}
+
 
 @Composable
 fun SunAndHumidityRow(weather: WeatherResponse) {
@@ -159,13 +207,18 @@ fun SunAndHumidityRow(weather: WeatherResponse) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(painterResource(id = R.drawable.ic_sunrise), contentDescription = null, modifier = Modifier.size(30.dp))
+            Icon(painterResource(id = R.drawable.ic_sunrise)
+                , contentDescription = null
+                , modifier = Modifier.size(30.dp))
             Text("Sunrise", fontSize = 12.sp)
-            Text(formatTime(weather.sys?.sunrise), fontWeight = FontWeight.Bold) // دالة لتحويل الـ Timestamp لوقت
+            Text(formatTime(weather.sys?.sunrise)
+                , fontWeight = FontWeight.Bold)
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("${weather.main?.humidity}%", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text("${weather.main?.humidity}%"
+                , fontSize = 28.sp
+                , fontWeight = FontWeight.Bold)
             Text("Humidity", fontSize = 12.sp)
         }
 
@@ -182,4 +235,78 @@ fun formatTime(timestamp: Int?): String {
     val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
     val date = java.util.Date(timestamp.toLong() * 1000)
     return sdf.format(date)
+}
+
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun WeatherScreenPreview() {
+    val mockData = WeatherResponse(
+        name = "Zagazig",
+        main = Main(
+            temp = 22.5,
+            tempMin = 18.0,
+            tempMax = 26.0,
+            pressure = 1012,
+            humidity = 55,
+            seaLevel = 1012,
+            grndLevel = 1000,
+            feelsLike = 21.0
+        ),
+        sys = Sys(
+            country = "EG",
+            sunrise = 1707452400,
+            sunset = 1707495600
+        ),
+        wind = Wind(
+            speed = 5.5,
+            deg = 120.0,
+            gust = 7.2
+        ),
+        dt = 1707474000
+    )
+
+    WeatherScreen(weatherData = mockData, forecastData = ForecastResponse())
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun MainCardPreview() {
+    val mockData = WeatherResponse(
+        name = "Berlin",
+        main = Main(temp = 12.0),
+        sys = Sys(country = "DE")
+    )
+    MainWeatherCard(weather = mockData)
+}
+
+@Composable
+fun HourlyWeatherList(hourlyData: List<ListItem?>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = "Hourly Forecast",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
+            color = Color.Black
+        )
+
+        androidx.compose.foundation.lazy.LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp)
+        ) {
+            items(hourlyData) { hourItem ->
+                HourlyWeatherItem(
+                    time = formatTime(hourItem?.dt),
+                    temp = hourItem?.main?.temp?.toInt().toString(),
+                    iconCode = hourItem?.weather?.get(0)?.icon ?: "01d"
+                )
+            }
+        }
+    }
 }

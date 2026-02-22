@@ -1,312 +1,550 @@
 package com.example.weather.presentation.home.view
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import com.example.weather.R
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.weather.R
 import com.example.weather.data.models.forecast.ForecastResponse
 import com.example.weather.data.models.forecast.ListItem
-import com.example.weather.data.models.weather.Main
-import com.example.weather.data.models.weather.Sys
 import com.example.weather.data.models.weather.WeatherResponse
-import com.example.weather.data.models.weather.Wind
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.random.Random
+
+// ألوان الدلع
+val SoftPink = Color(0xFFFDEFF9)
+val SoftBlue = Color(0xFFECF2FF)
+val AzureBlue = Color(0xFF3F51B5)
+val GlassWhite = Color(0xFFFFFFFF).copy(alpha = 0.9f)
 
 @Composable
-fun WeatherScreen(weatherData: WeatherResponse,forecastData: ForecastResponse) {
-    Column(
+fun WeatherScreen(weatherData: WeatherResponse, forecastData: ForecastResponse) {
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF2F5F8))
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Brush.verticalGradient(listOf(SoftBlue, SoftPink)))
     ) {
-        MainWeatherCard(weatherData)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            MainWeatherCard(weatherData)
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-        HourlyWeatherList(hourlyData = forecastData.list?: emptyList())
+            HourlyForecastSection(forecastData.list ?: emptyList())
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-        WeatherDetailGrid(weatherData)
+            WeatherDetailGrid(weatherData)
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-        SunAndHumidityRow(weatherData)
+            SunPhaseSection(weatherData)
+
+            Spacer(modifier = Modifier.height(40.dp))
+        }
     }
 }
 
 @Composable
 fun MainWeatherCard(weather: WeatherResponse) {
+    val temp = weather.main?.temp?.toInt() ?: 0
+    val condition = weather.weather?.get(0)?.main ?: "Clear"
+    val dynamicColors = getTemperatureColors(temp)
+
+    val color1 by animateColorAsState(targetValue = dynamicColors[0], animationSpec = tween(1200))
+    val color2 by animateColorAsState(targetValue = dynamicColors[1], animationSpec = tween(1200))
+
     Card(
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth().height(200.dp)
+        shape = RoundedCornerShape(45.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(350.dp)
+            .shadow(25.dp, RoundedCornerShape(45.dp), ambientColor = color1, spotColor = color1)
     ) {
-        Box {
-            Image(
-                painter = painterResource(id = R.drawable.ic_sunset),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(color1, color2)))
+        ) {
+            // تشغيل الـ Animation بناءً على الحالة
+            when {
+                condition.contains("Rain", true) -> RainAnimation()
+                condition.contains("Snow", true) -> SnowAnimation()
+                condition.contains("Cloud", true) -> CloudAnimation()
+                condition.contains("Clear", true) -> SunnyAnimation()
+                else -> SunnyAnimation()
+            }
 
+            // باقي محتويات الكارد (المدينة، الحرارة، إلخ)
             Column(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxSize().padding(30.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(modifier = Modifier.fillMaxWidth()
-                    , horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("09-02-2026", color = Color.White)
-                    Text("08:00 AM", color = Color.White)
-                }
+                // (الكود القديم بتاع المدينة والحرارة هنا)
+                Text(
+                    text = weather.name ?: "Cairo",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                )
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally
-                    , modifier = Modifier.fillMaxWidth()) {
-                    Text("${weather.main?.temp?.toInt() ?: 0}"
-                        , fontSize = 64.sp
-                        , color = Color.White
-                        , fontWeight = FontWeight.Bold)
-                    Text("(Celsius)", color = Color.White)
-                }
+                Text(
+                    text = "$temp°",
+                    fontSize = 110.sp,
+                    fontWeight = FontWeight.W100,
+                    color = Color.White
+                )
 
-                Text("${weather.name}, ${weather.sys?.country}", color = Color.White)
+                Surface(
+                    color = Color.White.copy(alpha = 0.2f),
+                    shape = CircleShape
+                ) {
+                    Text(
+                        text = weather.weather?.get(0)?.description?.uppercase() ?: "",
+                        modifier = Modifier.padding(horizontal = 25.dp, vertical = 8.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     }
 }
-
 @Composable
-fun WeatherDetailSection(title: String, icon: Painter, labels: List<String>, values: List<String>) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        , verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
-        Spacer(modifier = Modifier.width(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            labels.forEachIndexed { index, label ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(values[index], fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(label, fontSize = 12.sp, color = Color.Gray)
+fun HourlyForecastSection(hourlyData: List<ListItem?>) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Today's Schedule",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF2D3142)
+            )
+            Text(
+                "Next 24h",
+                fontSize = 12.sp,
+                color = AzureBlue,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(hourlyData.take(12)) { item -> // هناخد أول 12 ساعة بس عشان الزحمة
+                val isNow = hourlyData.indexOf(item) == 0 // تمييز أول عنصر كأنه "الآن"
+
+                Surface(
+                    modifier = Modifier
+                        .width(75.dp)
+                        .height(140.dp)
+                        .shadow(
+                            elevation = if (isNow) 15.dp else 4.dp,
+                            shape = RoundedCornerShape(35.dp),
+                            spotColor = if (isNow) AzureBlue else Color.Black.copy(0.1f)
+                        ),
+                    shape = RoundedCornerShape(35.dp),
+                    color = if (isNow) AzureBlue else Color.White
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // الوقت
+                        Text(
+                            text = if (isNow) "Now" else formatToHour(item?.dt),
+                            fontSize = 12.sp,
+                            color = if (isNow) Color.White.copy(0.8f) else Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        // الأيقونة
+                        AsyncImage(
+                            model = "https://openweathermap.org/img/wn/${item?.weather?.get(0)?.icon}@2x.png",
+                            contentDescription = null,
+                            modifier = Modifier.size(45.dp)
+                        )
+
+                        // درجة الحرارة
+                        Text(
+                            text = "${item?.main?.temp?.toInt()}°",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isNow) Color.White else Color(0xFF2D3142)
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun WeatherDetailGrid(weather: WeatherResponse) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(16.dp))
-            .padding(16.dp)
-    ) {
-        WeatherDetailSection(
-            title = "Temp",
-            icon = painterResource(id = R.drawable.ic_temp),
-            labels = listOf("Min", "Temp", "Max"),
-            values = listOf(
-                "${weather.main?.tempMin?.toInt() ?: 0}°",
-                "${weather.main?.temp?.toInt() ?: 0}°",
-                "${weather.main?.tempMax?.toInt() ?: 0}°"
-            )
-        )
-
-        WeatherDetailSection(
-            title = "Pressure",
-            icon = painterResource(id = R.drawable.ic_pressure),
-            labels = listOf("Sea Level", "Feels Like", "Ground"),
-            values = listOf(
-                "${weather.main?.seaLevel ?: 0}",
-                "${weather.main?.feelsLike?.toInt() ?: 0}°",
-                "${weather.main?.grndLevel ?: 0}"
-            )
-        )
-
-        WeatherDetailSection(
-            title = "Wind",
-            icon = painterResource(id = R.drawable.ic_wind),
-            labels = listOf("Speed", "Gust", "Degree"),
-            values = listOf(
-                "${weather.wind?.speed ?: 0}",
-                "${weather.wind?.gust ?: 0}",
-                "${weather.wind?.deg ?: 0}°"
-            )
-        )
-    }
-}
-
-@Composable
-fun HourlyWeatherItem(time: String, temp: String, iconCode: String) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .width(80.dp)
-            .padding(horizontal = 4.dp),
-        colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = time, fontSize = 12.sp, color = Color.Gray)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AsyncImage(
-                model = "https://openweathermap.org/img/wn/$iconCode@2x.png",
-                contentDescription = null,
-                modifier = Modifier.size(40.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "$temp°", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        }
-    }
-}
-
-
-@Composable
-fun SunAndHumidityRow(weather: WeatherResponse) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(painterResource(id = R.drawable.ic_sunrise)
-                , contentDescription = null
-                , modifier = Modifier.size(30.dp))
-            Text("Sunrise", fontSize = 12.sp)
-            Text(formatTime(weather.sys?.sunrise)
-                , fontWeight = FontWeight.Bold)
-        }
+        // كارت الرياح - واخد تاتش أزرق
+        DetailBox(
+            modifier = Modifier.weight(1f),
+            title = "Wind Speed",
+            value = "${weather.wind?.speed}",
+            unit = "km/h",
+            icon = R.drawable.ic_wind,
+            iconColor = Color(0xFF4FACFE),
+            gradient = listOf(Color(0xFFE0F2F1), Color(0xFFFFFFFF))
+        )
+        // كارت الرطوبة - واخد تاتش لبني/بنفسجي
+        DetailBox(
+            modifier = Modifier.weight(1f),
+            title = "Humidity",
+            value = "${weather.main?.humidity}",
+            unit = "%",
+            icon = R.drawable.ic_humidity,
+            iconColor = Color(0xFF4361EE),
+            gradient = listOf(Color(0xFFE8EAF6), Color(0xFFFFFFFF))
+        )
+    }
+}
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("${weather.main?.humidity}%"
-                , fontSize = 28.sp
-                , fontWeight = FontWeight.Bold)
-            Text("Humidity", fontSize = 12.sp)
-        }
+@Composable
+fun DetailBox(
+    modifier: Modifier,
+    title: String,
+    value: String,
+    unit: String,
+    icon: Int,
+    iconColor: Color,
+    gradient: List<Color>
+) {
+    Surface(
+        modifier = modifier
+            .height(140.dp) // زودنا الطول عشان التفاصيل تبان
+            .shadow(15.dp, RoundedCornerShape(35.dp), ambientColor = iconColor.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(35.dp),
+        color = Color.White
+    ) {
+        // خلفية ملونة خفيفة جداً داخل الكارت
+        Box(modifier = Modifier.background(Brush.verticalGradient(gradient)).fillMaxSize()) {
+            Column(
+                modifier = Modifier.padding(20.dp).fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.Start // المحاذاة للشمال أشيك في الكروت الصغيرة
+            ) {
+                // الأيقونة ملونة وشيك
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(iconColor.copy(alpha = 0.1f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = iconColor
+                    )
+                }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(painterResource(id = R.drawable.ic_sunset), contentDescription = null, modifier = Modifier.size(30.dp))
-            Text("Sunset", fontSize = 12.sp)
-            Text(formatTime(weather.dt), fontWeight = FontWeight.Bold)
+                Column {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = value,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF2D3142)
+                        )
+                        Text(
+                            text = " $unit",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+                    Text(
+                        text = title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray.copy(alpha = 0.8f)
+                    )
+                }
+            }
         }
     }
 }
 
-fun formatTime(timestamp: Int?): String {
-    if (timestamp == null) return "00:00 AM"
-    val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
-    val date = java.util.Date(timestamp.toLong() * 1000)
-    return sdf.format(date)
-}
-
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun WeatherScreenPreview() {
-    val mockData = WeatherResponse(
-        name = "Zagazig",
-        main = Main(
-            temp = 22.5,
-            tempMin = 18.0,
-            tempMax = 26.0,
-            pressure = 1012,
-            humidity = 55,
-            seaLevel = 1012,
-            grndLevel = 1000,
-            feelsLike = 21.0
-        ),
-        sys = Sys(
-            country = "EG",
-            sunrise = 1707452400,
-            sunset = 1707495600
-        ),
-        wind = Wind(
-            speed = 5.5,
-            deg = 120.0,
-            gust = 7.2
-        ),
-        dt = 1707474000
-    )
-
-    WeatherScreen(weatherData = mockData, forecastData = ForecastResponse())
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-fun MainCardPreview() {
-    val mockData = WeatherResponse(
-        name = "Berlin",
-        main = Main(temp = 12.0),
-        sys = Sys(country = "DE")
-    )
-    MainWeatherCard(weather = mockData)
-}
-
-@Composable
-fun HourlyWeatherList(hourlyData: List<ListItem?>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+fun SunPhaseSection(weather: WeatherResponse) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(100.dp),
+        shape = RoundedCornerShape(35.dp),
+        color = Color.White
     ) {
-        Text(
-            text = "Hourly Forecast",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
-            color = Color.Black
-        )
+        Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
+            SunInfoItem("Sunrise", formatTime(weather.sys?.sunrise), R.drawable.ic_sunrise)
+            Box(Modifier.width(1.dp).height(40.dp).background(SoftBlue))
+            SunInfoItem("Sunset", formatTime(weather.sys?.sunset), R.drawable.ic_sunset)
+        }
+    }
+}
 
-        androidx.compose.foundation.lazy.LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp)
-        ) {
-            items(hourlyData) { hourItem ->
-                HourlyWeatherItem(
-                    time = formatTime(hourItem?.dt),
-                    temp = hourItem?.main?.temp?.toInt().toString(),
-                    iconCode = hourItem?.weather?.get(0)?.icon ?: "01d"
+@Composable
+fun SunInfoItem(title: String, time: String, icon: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(painterResource(icon), null, modifier = Modifier.size(30.dp), tint = Color(0xFFFFB74D))
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(title, fontSize = 11.sp, color = Color.Gray)
+            Text(time, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+fun formatDate(t: Int?): String = t?.let { SimpleDateFormat("EEEE, d MMMM", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
+fun formatToHour(t: Int?): String = t?.let { SimpleDateFormat("ha", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
+fun formatTime(t: Int?): String = t?.let { SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
+
+@Composable
+fun getTemperatureColors(temp: Int): List<Color> {
+    return when {
+        temp < 15 -> listOf(Color(0xFF61A3CC), Color(0xFFA6C1EE)) // أزرق رمادي ثلجي (Cold)
+        temp in 15..25 -> listOf(Color(0xFF72C2D1), Color(0xFFC3E5AE)) // فيروزي هادي (Pleasant)
+        else -> listOf(Color(0xFFE89E90), Color(0xFFF8D29D)) // مرجاني دافئ مطفي (Hot)
+    }
+}
+
+
+@Composable
+fun RainAnimation() {
+    val infiniteTransition = rememberInfiniteTransition(label = "random_rain")
+
+    val progress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = "rain_progress"
+    )
+
+// الحل الأول: استخدام الـ ArrayList الصريحة
+    val rainDrops = remember {
+        ArrayList<Triple<Float, Float, Float>>().apply {
+            repeat(70) {
+                add(
+                    Triple(
+                        Random.nextInt(0, 1000).toFloat(), // مكان X عشوائي
+                        Random.nextInt(0, 1000).toFloat(), // إزاحة Y عشوائية
+                        Random.nextFloat() * (1.5f - 0.5f) + 0.5f // سرعة عشوائية بين 0.5 و 1.5
+                    )
                 )
             }
         }
+    }
+
+    Canvas(modifier = Modifier.fillMaxSize().alpha(0.45f)) {
+        rainDrops.forEach { (xRatio, yOffsetRatio, speedMultiplier) ->
+            val x = (xRatio / 1000f) * size.width
+            val currentProgress = (progress * speedMultiplier + yOffsetRatio / 1000f) % 1f
+            val y = currentProgress * size.height
+
+            drawLine(
+                color = Color.White,
+                start = Offset(x, y),
+                end = Offset(x, y + 45f),
+                strokeWidth = 5f,
+                cap = StrokeCap.Round
+            )
+        }
+    }
+}
+@Composable
+fun CloudAnimation() {
+    val transition = rememberInfiniteTransition(label = "clouds")
+    val offsetX by transition.animateFloat(
+        initialValue = -100f,
+        targetValue = 100f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(5000, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = ""
+    )
+
+    Box(modifier = Modifier.fillMaxSize().alpha(0.2f)) {
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .offset(x = offsetX.dp, y = 20.dp)
+                .background(Color.White, CircleShape)
+                .blur(60.dp)
+        )
+        Box(
+            modifier = Modifier
+                .size(150.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = (-offsetX).dp, y = (-20).dp)
+                .background(Color.White, CircleShape)
+                .blur(50.dp)
+        )
+    }
+}
+
+@Composable
+fun SunnyAnimation() {
+    val infiniteTransition = rememberInfiniteTransition(label = "sun")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ), label = "sun_glow"
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // دائرة نور في الركن فوق يمين
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 40.dp, y = (-40).dp)
+                .graphicsLayer(scaleX = scale, scaleY = scale) // النور بيكبر ويصغر
+                .background(
+                    Brush.radialGradient(
+                        listOf(Color.White.copy(alpha = 0.4f), Color.Transparent)
+                    ),
+                    CircleShape
+                )
+                .blur(40.dp)
+        )
+    }
+}
+
+
+@Composable
+fun SnowAnimation() {
+    val infiniteTransition = rememberInfiniteTransition(label = "snow")
+
+    // حركة النزول (Vertical)
+    val snowY by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(5000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = "snow_fall"
+    )
+
+    // حركة التمايل (Horizontal)
+    val wobble by infiniteTransition.animateFloat(
+        initialValue = -20f,
+        targetValue = 20f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ), label = "snow_wobble"
+    )
+
+    Canvas(modifier = Modifier.fillMaxSize().alpha(0.6f)) {
+        for (i in 0..40) {
+            val startX = (i * 30f + wobble) % size.width
+            val startY = (snowY + (i * 150f)) % size.height
+
+            drawCircle(
+                color = Color.White,
+                radius = 6f, // كرات ثلج مدورة
+                center = androidx.compose.ui.geometry.Offset(startX, startY)
+            )
+        }
+    }
+}
+
+
+@Preview(showBackground = true, device = "spec:width=411dp,height=891dp", showSystemUi = true)
+@Composable
+fun LuxuryWeatherPreview() {
+    val mockWeather = WeatherResponse(
+        name = "Dubai",
+        main = com.example.weather.data.models.weather.Main(
+            temp = 24.0,
+            feelsLike = 26.0,
+            humidity = 35,
+            pressure = 1012
+        ),
+        weather = listOf(com.example.weather.data.models.weather.WeatherItem(icon = "01d", description = "Sunny Day")),
+        wind = com.example.weather.data.models.weather.Wind(speed = 5.4),
+        sys = com.example.weather.data.models.weather.Sys(country = "UAE", sunrise = 1708572000, sunset = 1708615200),
+        dt = 1708593600
+    )
+
+    val mockForecastList = List(10) { index ->
+        ListItem(
+            dt = 1708593600 + (index * 3600),
+            main = com.example.weather.data.models.weather.Main(temp = 22.0 + index),
+            weather = listOf(com.example.weather.data.models.weather.WeatherItem(icon = "01d"))
+        )
+    }
+
+    val mockForecast = ForecastResponse(list = mockForecastList)
+
+    WeatherScreen(weatherData = mockWeather, forecastData = mockForecast)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun IndividualDetailPreview() {
+    Box(modifier = Modifier.padding(20.dp).background(SoftBlue)) {
+        DetailBox(
+            modifier = Modifier.width(160.dp),
+            title = "Wind Speed",
+            value = "12.5",
+            unit = "km/h",
+            icon = R.drawable.ic_wind,
+            iconColor = Color(0xFF4FACFE),
+            gradient = listOf(Color(0xFFE0F2F1), Color(0xFFFFFFFF))
+        )
     }
 }

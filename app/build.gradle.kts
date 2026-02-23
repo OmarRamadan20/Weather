@@ -92,4 +92,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
 
 
+    implementation ("com.github.bumptech.glide:compose:1.0.0-beta01")
 }

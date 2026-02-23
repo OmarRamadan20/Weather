@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -17,35 +18,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.weather.R
-import com.example.weather.data.models.forecast.ForecastResponse
+import com.example.weather.data.models.daily.DailyResponse
+import com.example.weather.data.models.hourly.HourlyResponse
+import com.example.weather.data.models.forecast.DailyItem
 import com.example.weather.data.models.forecast.ListItem
 import com.example.weather.data.models.weather.WeatherResponse
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.collections.take
+import kotlin.math.sin
 import kotlin.random.Random
 
-// ألوان الدلع
 val SoftPink = Color(0xFFFDEFF9)
 val SoftBlue = Color(0xFFECF2FF)
 val AzureBlue = Color(0xFF3F51B5)
 val GlassWhite = Color(0xFFFFFFFF).copy(alpha = 0.9f)
 
 @Composable
-fun WeatherScreen(weatherData: WeatherResponse, forecastData: ForecastResponse) {
+fun WeatherScreen(
+    weatherData: WeatherResponse,
+    hourlyResponse: HourlyResponse,
+    dailyData: DailyResponse // التعديل هنا
+) {
+    val forecastList = hourlyResponse.list?.filterNotNull() ?: emptyList()
+    val dailyData = dailyData.list?.filterNotNull() ?: emptyList()
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -62,7 +80,8 @@ fun WeatherScreen(weatherData: WeatherResponse, forecastData: ForecastResponse) 
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            HourlyForecastSection(forecastData.list ?: emptyList())
+            // نبعت الـ list اللي جاية من الـ Pro API
+            HourlyForecastSection(hourlyData = forecastList)
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -72,11 +91,15 @@ fun WeatherScreen(weatherData: WeatherResponse, forecastData: ForecastResponse) 
 
             SunPhaseSection(weatherData)
 
+            Spacer(modifier = Modifier.height(30.dp))
+
+            // تريكة اليومي: بما إن الـ Pro بيدينا ساعات، هنعرض أول عنصر من كل يوم
+            DailyForecastSection(dailyData = dailyData) // محتاجة تعديل بسيط في الموديل داخل الفانكشن
+
             Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
-
 @Composable
 fun MainWeatherCard(weather: WeatherResponse) {
     val temp = weather.main?.temp?.toInt() ?: 0
@@ -98,22 +121,19 @@ fun MainWeatherCard(weather: WeatherResponse) {
                 .fillMaxSize()
                 .background(Brush.verticalGradient(listOf(color1, color2)))
         ) {
-            // تشغيل الـ Animation بناءً على الحالة
             when {
                 condition.contains("Rain", true) -> RainAnimation()
                 condition.contains("Snow", true) -> SnowAnimation()
                 condition.contains("Cloud", true) -> CloudAnimation()
-                condition.contains("Clear", true) -> SunnyAnimation()
-                else -> SunnyAnimation()
+                condition.contains("Clear", true) -> SunnyAnimation(temp)
+                else -> SunnyAnimation(temp)
             }
 
-            // باقي محتويات الكارد (المدينة، الحرارة، إلخ)
             Column(
                 modifier = Modifier.fillMaxSize().padding(30.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // (الكود القديم بتاع المدينة والحرارة هنا)
                 Text(
                     text = weather.name ?: "Cairo",
                     fontSize = 28.sp,
@@ -145,79 +165,236 @@ fun MainWeatherCard(weather: WeatherResponse) {
     }
 }
 @Composable
-fun HourlyForecastSection(hourlyData: List<ListItem?>) {
+fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourly.ListItem>) {
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Today's Schedule",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF2D3142)
-            )
-            Text(
-                "Next 24h",
-                fontSize = 12.sp,
-                color = AzureBlue,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Hourly Forecast", // خليها أوضح
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Black,
+            color = Color(0xFF2D3142),
+        )
+        Spacer(modifier = Modifier.height(18.dp))
 
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 4.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 15.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(hourlyData.take(12)) { item -> // هناخد أول 12 ساعة بس عشان الزحمة
-                val isNow = hourlyData.indexOf(item) == 0 // تمييز أول عنصر كأنه "الآن"
+            items(hourlyData) { item ->
+                val temp = item.main?.temp?.toInt() ?: 0
+                val itemColors = getTemperatureColors(temp)
 
-                Surface(
+                // أنيميشن ناعم جداً للدرجة اللونية (توهج خفيف مش حركة عشوائية)
+                val infiniteTransition = rememberInfiniteTransition(label = "glow")
+                val alphaAnim by infiniteTransition.animateFloat(
+                    initialValue = 0.7f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = ""
+                )
+
+                Box(
                     modifier = Modifier
-                        .width(75.dp)
-                        .height(140.dp)
+                        .width(85.dp) // زودنا العرض سنة عشان يبقى مريح
+                        .height(160.dp)
                         .shadow(
-                            elevation = if (isNow) 15.dp else 4.dp,
-                            shape = RoundedCornerShape(35.dp),
-                            spotColor = if (isNow) AzureBlue else Color.Black.copy(0.1f)
+                            elevation = 12.dp,
+                            shape = RoundedCornerShape(32.dp),
+                            spotColor = itemColors[0].copy(alpha = 0.4f)
+                        )
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    itemColors[0].copy(alpha = alphaAnim),
+                                    itemColors[1].copy(alpha = alphaAnim)
+                                )
+                            ),
+                            shape = RoundedCornerShape(32.dp)
+                        )
+                        .border(
+                            width = 1.5.dp,
+                            color = Color.White.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(32.dp)
                         ),
-                    shape = RoundedCornerShape(35.dp),
-                    color = if (isNow) AzureBlue else Color.White
+                    contentAlignment = Alignment.Center
                 ) {
+                    // إضافة لمعة (Reflective Light) في زاوية الكارت
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color.White.copy(alpha = 0.2f), Color.Transparent),
+                                    start = Offset.Zero,
+                                    end = Offset(100f, 100f)
+                                )
+                            )
+                    )
+
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(vertical = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxSize().padding(vertical = 12.dp)
                     ) {
-                        // الوقت
                         Text(
-                            text = if (isNow) "Now" else formatToHour(item?.dt),
-                            fontSize = 12.sp,
-                            color = if (isNow) Color.White.copy(0.8f) else Color.Gray,
-                            fontWeight = FontWeight.Medium
+                            text = formatToHour(item.dt?.toInt()),
+                            fontSize = 13.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
                         )
 
-                        // الأيقونة
+                        // أيقونة الطقس بتأثير 3D بسيط
                         AsyncImage(
-                            model = "https://openweathermap.org/img/wn/${item?.weather?.get(0)?.icon}@2x.png",
+                            model = "https://openweathermap.org/img/wn/${item.weather?.getOrNull(0)?.icon}@4x.png",
                             contentDescription = null,
-                            modifier = Modifier.size(45.dp)
+                            modifier = Modifier
+                                .size(55.dp)
+                                .graphicsLayer {
+                                    // حركة خفيفة للأيقونة كأنها بتعوم
+                                    translationY = (alphaAnim - 0.85f) * 20f
+                                }
                         )
 
-                        // درجة الحرارة
                         Text(
-                            text = "${item?.main?.temp?.toInt()}°",
-                            fontSize = 20.sp,
+                            text = "$temp°",
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Black,
-                            color = if (isNow) Color.White else Color(0xFF2D3142)
+                            color = Color.White,
+                            style = TextStyle(
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.15f),
+                                    offset = Offset(0f, 4f),
+                                    blurRadius = 8f
+                                )
+                            )
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun DailyForecastSection(dailyData: List<com.example.weather.data.models.daily.ListItem>) {
+    if (dailyData.isEmpty()) return
+
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 22.dp, vertical = 20.dp)
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = "Next 7 Days",
+            style = TextStyle(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF2D3142),
+                shadow = Shadow(color = Color.Black.copy(alpha = 0.1f), blurRadius = 5f)
+            ),
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // ركز هنا.. هنلف على الداتا ونعرضها بشكل "نظيف"
+        dailyData.take(7).forEachIndexed { index, day ->
+            DailyWeatherCard(day, index)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index: Int) {
+    // حل مشكلة الداتا اللي بتضرب (الـ Number Casting)
+    val maxTemp = (day.temp?.max as? Number)?.toInt() ?: 0
+    val minTemp = (day.temp?.min as? Number)?.toInt() ?: 0
+
+    // تحويل التاريخ
+    val timestamp = (day.dt?.toLong() ?: 0L) * 1000L
+    val sdf = SimpleDateFormat("EEEE", Locale.ENGLISH)
+    val dayName = if (index == 0) "Today" else sdf.format(Date(timestamp))
+
+    // الأيقونة (تأكد من كتابة الرابط صح)
+    val iconCode = day.weather?.getOrNull(0)?.icon ?: "01d"
+    val iconUrl = "https://openweathermap.org/img/wn/$iconCode@4x.png"
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.9f),
+                        Color.White.copy(alpha = 0.6f)
+                    )
+                )
+            )
+            .border(1.dp, Color.White, RoundedCornerShape(24.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // 1. اليوم والتاريخ الصغير
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = dayName,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2D3142)
+                )
+                Text(
+                    text = day.weather?.getOrNull(0)?.main ?: "Clear",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+            }
+
+            // 2. الصورة (هنا حل المشكلة: هنستخدم Crossfade عشان تظهر بنعومة)
+            AsyncImage(
+                model = iconUrl,
+                contentDescription = "Weather Icon",
+                modifier = Modifier.size(60.dp), // كبّرنا الصورة شوية
+                contentScale = ContentScale.Fit
+            )
+
+            // 3. الحرارة بشكل "فاجر"
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$maxTemp°",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF2D3142)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                // بار صغير بيفصل بينهم بشكل جمالي
+                Box(modifier = Modifier.width(2.dp).height(20.dp).background(Color.LightGray.copy(alpha = 0.5f)))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "$minTemp°",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Gray
+                )
+            }
+        }
+    }
+}
+@Composable
+fun getTemperatureColors(temp: Int): List<Color> {
+    return when {
+        temp <= 5 -> listOf(Color(0xFF1A237E), Color(0xFF5C6BC0)) // أزرق غامق جداً (ثلج)
+        temp in 6..15 -> listOf(Color(0xFF61A3CC), Color(0xFFA6C1EE)) // برد
+        temp in 16..27 -> listOf(Color(0xFFF6D365), Color(0xFFFDA085)) // ربيعي/دافئ
+        else -> listOf(Color(0xFFFF5F6D), Color(0xFFFFC371)) // ناري (حر)
     }
 }
 
@@ -318,27 +495,89 @@ fun DetailBox(
 
 @Composable
 fun SunPhaseSection(weather: WeatherResponse) {
+    // تأثير الزجاج مع خلفية بيضاء شفافة
     Surface(
-        modifier = Modifier.fillMaxWidth().height(100.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(110.dp) // زودنا الطول سنة
+            .shadow(15.dp, RoundedCornerShape(35.dp), ambientColor = Color.Gray.copy(alpha = 0.2f)),
         shape = RoundedCornerShape(35.dp),
-        color = Color.White
+        color = Color.White.copy(alpha = 0.9f) // درجة شفافية بسيطة
     ) {
-        Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
-            SunInfoItem("Sunrise", formatTime(weather.sys?.sunrise), R.drawable.ic_sunrise)
-            Box(Modifier.width(1.dp).height(40.dp).background(SoftBlue))
-            SunInfoItem("Sunset", formatTime(weather.sys?.sunset), R.drawable.ic_sunset)
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // شروق الشمس
+            SunInfoItem(
+                title = "Sunrise",
+                time = formatTime(weather.sys?.sunrise),
+                icon = R.drawable.ic_sunrise,
+                accentColor = Color(0xFFFFB74D) // برتقالي للشروق
+            )
+
+            // فاصل شيك (Vertical Divider)
+            Box(
+                modifier = Modifier
+                    .width(1.5.dp)
+                    .height(50.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, SoftBlue, Color.Transparent)
+                        )
+                    )
+            )
+
+            // غروب الشمس
+            SunInfoItem(
+                title = "Sunset",
+                time = formatTime(weather.sys?.sunset),
+                icon = R.drawable.ic_sunset,
+                accentColor = Color(0xFFFF7043) // أحمر/برتقالي غامق للغروب
+            )
         }
     }
 }
 
 @Composable
-fun SunInfoItem(title: String, time: String, icon: Int) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(painterResource(icon), null, modifier = Modifier.size(30.dp), tint = Color(0xFFFFB74D))
-        Spacer(Modifier.width(10.dp))
+fun SunInfoItem(title: String, time: String, icon: Int, accentColor: Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(45.dp)
+                .background(accentColor.copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = accentColor
+            )
+        }
+
+        Spacer(Modifier.width(12.dp))
+
         Column {
-            Text(title, fontSize = 11.sp, color = Color.Gray)
-            Text(time, fontWeight = FontWeight.Bold)
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Gray
+            )
+            Text(
+                text = time,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF2D3142)
+            )
         }
     }
 }
@@ -347,14 +586,7 @@ fun formatDate(t: Int?): String = t?.let { SimpleDateFormat("EEEE, d MMMM", Loca
 fun formatToHour(t: Int?): String = t?.let { SimpleDateFormat("ha", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
 fun formatTime(t: Int?): String = t?.let { SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
 
-@Composable
-fun getTemperatureColors(temp: Int): List<Color> {
-    return when {
-        temp < 15 -> listOf(Color(0xFF61A3CC), Color(0xFFA6C1EE)) // أزرق رمادي ثلجي (Cold)
-        temp in 15..25 -> listOf(Color(0xFF72C2D1), Color(0xFFC3E5AE)) // فيروزي هادي (Pleasant)
-        else -> listOf(Color(0xFFE89E90), Color(0xFFF8D29D)) // مرجاني دافئ مطفي (Hot)
-    }
-}
+
 
 
 @Composable
@@ -404,61 +636,142 @@ fun RainAnimation() {
 @Composable
 fun CloudAnimation() {
     val transition = rememberInfiniteTransition(label = "clouds")
-    val offsetX by transition.animateFloat(
-        initialValue = -100f,
-        targetValue = 100f,
+
+    // أنيميشن الحركة الأفقية
+    val fastOffset by transition.animateFloat(
+        initialValue = -200f,
+        targetValue = 600f, // زودنا المدى عشان تطلع وتدخل براحتها
         animationSpec = infiniteRepeatable(
-            animation = tween(5000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = ""
+            animation = tween(18000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = "fastCloud"
     )
 
-    Box(modifier = Modifier.fillMaxSize().alpha(0.2f)) {
-        Box(
+    // أنيميشن النبض (Pulse)
+    val cloudPulse by transition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "pulse"
+    )
+
+    // شيلنا الـ alpha من هنا عشان نتحكم فيها جوه كل سحابة براحتنا
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // سحابة 1 (كبيرة وواضحة في النص)
+        CloudShapePro(
+            size = 280.dp,
             modifier = Modifier
-                .size(200.dp)
-                .offset(x = offsetX.dp, y = 20.dp)
-                .background(Color.White, CircleShape)
-                .blur(60.dp)
+                .align(Alignment.CenterStart)
+                .offset(x = fastOffset.dp, y = (-120).dp)
+                .scale(cloudPulse)
+                .alpha(0.7f) // وضوح عالي
         )
-        Box(
+
+        // سحابة 2 (أصغر ومزوية)
+        CloudShapePro(
+            size = 180.dp,
             modifier = Modifier
-                .size(150.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = (-offsetX).dp, y = (-20).dp)
-                .background(Color.White, CircleShape)
-                .blur(50.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = (-fastOffset / 2).dp, y = 80.dp) // بتتحرك عكس
+                .scale(cloudPulse * 0.8f)
+                .alpha(0.5f)
         )
     }
 }
 
 @Composable
-fun SunnyAnimation() {
-    val infiniteTransition = rememberInfiniteTransition(label = "sun")
+fun CloudShapePro(size: Dp, modifier: Modifier = Modifier) {
+    // سر الـ "فجر": بنحط كذا دائرة فوق بعض بـ Blur مختلف عشان نعمل كثافة
+    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+        // الطبقة الخارجية (النفشة)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(Color.White.copy(alpha = 0.6f), Color.Transparent)
+                    ), CircleShape
+                )
+                .blur(40.dp) // Blur أقل عشان متختفيش
+        )
+        // الطبقة الداخلية (قلب السحابة التقيل)
+        Box(
+            modifier = Modifier
+                .fillMaxSize(0.6f)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(Color.White.copy(alpha = 0.9f), Color.Transparent)
+                    ), CircleShape
+                )
+                .blur(20.dp)
+        )
+    }
+}
+@Composable
+fun SunnyAnimation(temp: Int) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pro_sun")
+
+    val isExtremelyHot = temp > 28
+    val rotationDuration = if (isExtremelyHot) 10000 else 20000 // دوران أسرع في الحر الجامد
+    val glowIntensity = if (isExtremelyHot) 0.8f else 0.4f // توهج أقوى
+
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(rotationDuration, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = ""
+    )
+
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.2f,
+        targetValue = if (isExtremelyHot) 1.5f else 1.2f, // نبض أقوى في الحر
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = EaseInOutSine),
+            animation = tween(if (isExtremelyHot) 2000 else 4000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
-        ), label = "sun_glow"
+        ), label = ""
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // دائرة نور في الركن فوق يمين
+        Canvas(
+            modifier = Modifier
+                .size(if (isExtremelyHot) 500.dp else 400.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 100.dp, y = (-100).dp)
+                .graphicsLayer(rotationZ = rotation, alpha = if (isExtremelyHot) 0.3f else 0.15f)
+        ) {
+            val rayCount = if (isExtremelyHot) 12 else 8
+            val angleStep = 360f / rayCount
+            for (i in 0 until rayCount) {
+                drawArc(
+                    color = Color.White,
+                    startAngle = i * angleStep,
+                    sweepAngle = if (isExtremelyHot) 20f else 15f,
+                    useCenter = true,
+                    size = size
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
-                .size(200.dp)
+                .size(if (isExtremelyHot) 300.dp else 250.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 40.dp, y = (-40).dp)
-                .graphicsLayer(scaleX = scale, scaleY = scale) // النور بيكبر ويصغر
+                .offset(x = 50.dp, y = (-50).dp)
+                .graphicsLayer(scaleX = scale, scaleY = scale)
                 .background(
                     Brush.radialGradient(
-                        listOf(Color.White.copy(alpha = 0.4f), Color.Transparent)
+                        0.0f to Color.White.copy(alpha = glowIntensity),
+                        0.6f to (if (isExtremelyHot) Color(0xFFFF7043) else Color(0xFFFFE082)).copy(alpha = 0.3f),
+                        1.0f to Color.Transparent
                     ),
                     CircleShape
                 )
-                .blur(40.dp)
+                .blur(if (isExtremelyHot) 80.dp else 60.dp)
         )
     }
 }
@@ -466,41 +779,58 @@ fun SunnyAnimation() {
 
 @Composable
 fun SnowAnimation() {
-    val infiniteTransition = rememberInfiniteTransition(label = "snow")
+    val infiniteTransition = rememberInfiniteTransition(label = "random_snow")
 
-    // حركة النزول (Vertical)
-    val snowY by infiniteTransition.animateFloat(
+    val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 1000f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(5000, easing = LinearEasing),
+            animation = tween(8000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
-        ), label = "snow_fall"
+        ), label = "snow_progress"
     )
 
-    // حركة التمايل (Horizontal)
     val wobble by infiniteTransition.animateFloat(
-        initialValue = -20f,
-        targetValue = 20f,
+        initialValue = -25f,
+        targetValue = 15f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = EaseInOutSine),
+            animation = tween(2500, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ), label = "snow_wobble"
     )
 
-    Canvas(modifier = Modifier.fillMaxSize().alpha(0.6f)) {
-        for (i in 0..40) {
-            val startX = (i * 30f + wobble) % size.width
-            val startY = (snowY + (i * 150f)) % size.height
+    val snowFlakes = remember {
+        ArrayList<List<Float>>().apply {
+            repeat(50) {
+                add(
+                    listOf(
+                        Random.nextFloat(),
+                        Random.nextFloat(),
+                        Random.nextFloat() * 0.3f + 0.2f,
+                        Random.nextFloat() * 7f + 5f
+                    )
+                )
+            }
+        }
+    }
+
+    Canvas(modifier = Modifier.fillMaxSize().alpha(0.8f)) {
+        val width = size.width
+        val height = size.height
+
+        snowFlakes.forEach { flake ->
+            val x = (flake[0] * width) + wobble
+            val y = ((progress * flake[2] + flake[1]) % 1f) * height
 
             drawCircle(
                 color = Color.White,
-                radius = 6f, // كرات ثلج مدورة
-                center = androidx.compose.ui.geometry.Offset(startX, startY)
+                radius = flake[3],
+                center = Offset(x, y)
             )
         }
     }
 }
+
 
 
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp", showSystemUi = true)
@@ -528,9 +858,7 @@ fun LuxuryWeatherPreview() {
         )
     }
 
-    val mockForecast = ForecastResponse(list = mockForecastList)
 
-    WeatherScreen(weatherData = mockWeather, forecastData = mockForecast)
 }
 
 @Preview(showBackground = true)
@@ -547,4 +875,10 @@ fun IndividualDetailPreview() {
             gradient = listOf(Color(0xFFE0F2F1), Color(0xFFFFFFFF))
         )
     }
+}
+
+
+val SineWaveEasing = Easing { fraction ->
+
+    sin(fraction * Math.PI).toFloat()
 }

@@ -3,7 +3,8 @@ package com.example.weather.presentation.home.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weather.data.datasources.remote.network.MyResult
-import com.example.weather.data.models.forecast.ForecastResponse
+import com.example.weather.data.models.daily.DailyResponse
+import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.weather.WeatherResponse
 import com.example.weather.data.repo.NetworkRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,52 +15,35 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
 
     private val _weatherState = MutableStateFlow<MyResult<WeatherResponse>>(MyResult.Loading)
     val weatherState = _weatherState.asStateFlow()
-    private val _forecastState = MutableStateFlow<MyResult<ForecastResponse>>(MyResult.Loading)
 
-    val forecastState = _forecastState.asStateFlow()
+    private val _hourlyState = MutableStateFlow<MyResult<HourlyResponse>>(MyResult.Loading)
+    val hourlyState = _hourlyState.asStateFlow()
+
+    private val _dailyState = MutableStateFlow<MyResult<DailyResponse>>(MyResult.Loading)
+    val dailyState = _dailyState.asStateFlow()
 
 
-    fun fetchWeather(lat: Double, lon: Double,city:String) {
+    fun fetchWeather(lat: Double, lon: Double, apiKey: String, units: String, lang: String) {
         viewModelScope.launch {
+            _weatherState.value = MyResult.Loading
+            _hourlyState.value = MyResult.Loading
+            _dailyState.value = MyResult.Loading
 
-            val result = repository.getCurrentWeather(
-                lat = lat,
-                lon = lon,
-                apiKey = "a50b3547c713e7be1ec57c696006497f",
-                units = "metric",
-                lang = "en"
-            )
-            val forecastResult = repository.getForecast(
-                cityName = city,
-                apiKey = "a50b3547c713e7be1ec57c696006497f"
-                ,units = "metric"
-            )
+            try {
+                val weatherResult = repository.getCurrentWeather(lat, lon, apiKey, units, lang)
+                val hourlyResponse = repository.getHourlyForecast(lat, lon, apiKey, units)
+                val dailyResponse = repository.dailyForecast(lat, lon, apiKey)
+                _dailyState.value = dailyResponse
 
-            when(forecastResult){
-                is MyResult.Success -> {
-                    _forecastState.value = MyResult.Success(forecastResult.data)
-                }
-                is MyResult.Error -> {
-                    _forecastState.value = MyResult.Error(forecastResult.message)
-                }
-                is MyResult.Loading -> {
-                    _forecastState.value = MyResult.Loading
-                }
+                _weatherState.value = weatherResult
 
+                _hourlyState.value = hourlyResponse
 
-            }
-
-           when (result) {
-                is MyResult.Success -> {
-                    _weatherState.value = MyResult.Success(result.data)
-
-                }
-                is MyResult.Error -> {
-                    _weatherState.value = MyResult.Error(result.message)
-                }
-                else -> {
-                    _weatherState.value = MyResult.Loading
-                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "Unknown Network Error"
+                _weatherState.value = MyResult.Error(errorMessage)
+                _hourlyState.value = MyResult.Error(errorMessage)
+                _dailyState.value = MyResult.Error(errorMessage)
             }
         }
     }

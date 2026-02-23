@@ -39,11 +39,20 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WeatherRoute(viewModel: HomeViewModel) {
     val weatherState by viewModel.weatherState.collectAsState()
-    val forecastState by viewModel.forecastState.collectAsState()
+    val forecastState by viewModel.hourlyState.collectAsState()
+    val dailyState by viewModel.dailyState.collectAsState()
+
+
 
 
     LaunchedEffect(Unit) {
-        viewModel.fetchWeather(lat = 52.5200, lon = 13.4050,city = "Berlin")
+        viewModel.fetchWeather(
+            lat = 29.8319,
+            lon = 31.3601,
+            apiKey ="a50b3547c713e7be1ec57c696006497f",
+            units = "metric",
+            lang = "en"
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -55,11 +64,15 @@ fun WeatherRoute(viewModel: HomeViewModel) {
 
             weatherState is MyResult.Success && forecastState is MyResult.Success -> {
                 val weatherData = (weatherState as MyResult.Success).data
-                val forecastData = (forecastState as MyResult.Success).data
+                val hourlyData = (forecastState as MyResult.Success).data
+                val dailyData = (dailyState as MyResult.Success).data
+
 
                 WeatherScreen(
                     weatherData = weatherData,
-                    forecastData = forecastData
+                    hourlyResponse = hourlyData,
+                    dailyData = dailyData
+
                 )
             }
 
@@ -73,6 +86,12 @@ fun WeatherRoute(viewModel: HomeViewModel) {
             forecastState is MyResult.Error -> {
                 Text(
                     text = "Forecast Error: ${(forecastState as MyResult.Error).message}",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            dailyState is MyResult.Error->{
+                Text(
+                    text = "Daily Error: ${(dailyState as MyResult.Error).message}",
                     modifier = Modifier.align(Alignment.Center)
                 )
             }

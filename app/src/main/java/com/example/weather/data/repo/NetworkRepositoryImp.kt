@@ -2,7 +2,8 @@ package com.example.weather.data.repo
 
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.datasources.remote.network.NetworkDataSource
-import com.example.weather.data.models.forecast.ForecastResponse
+import com.example.weather.data.models.daily.DailyResponse
+import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.weather.WeatherResponse
 
 class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRepository {
@@ -16,11 +17,20 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
         return dataSource.getCurrentWeather(lat, lon, apiKey, units, lang)
     }
 
-    override suspend fun getForecast(
-        cityName: String,
+    override suspend fun getHourlyForecast(
+        lat: Double,
+        lon: Double,
         apiKey: String,
         units: String
-    ): MyResult<ForecastResponse> {
-        return dataSource.getForecast(cityName, apiKey, units)
+    ): MyResult<HourlyResponse> {
+        return dataSource.getHourlyForecast(lat=lat,lon=lon,apiKey=apiKey,units=units)
+    }
+
+    override suspend fun dailyForecast(
+        lat: Double,
+        lon: Double,
+        apiKey: String
+        ): MyResult<DailyResponse> {
+        return dataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey)
     }
 }

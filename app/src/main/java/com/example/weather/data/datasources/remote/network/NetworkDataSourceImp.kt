@@ -1,7 +1,8 @@
 package com.example.weather.data.datasources.remote.network
 
 import com.example.weather.data.config.network.WeatherApiService
-import com.example.weather.data.models.forecast.ForecastResponse
+import com.example.weather.data.models.daily.DailyResponse
+import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.weather.WeatherResponse
 
 class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDataSource {
@@ -16,12 +17,21 @@ class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDa
         return MyResult.Success(result)
     }
 
-    override suspend fun getForecast(
-        cityName: String,
+    override suspend fun getHourlyForecast(
+        lat: Double,
+        lon: Double,
         apiKey: String,
         units: String
-    ): MyResult<ForecastResponse> {
-        val result = apiService.getForecast(cityName,apiKey,units)
+    ): MyResult<HourlyResponse> {
+        val result = apiService.getHourlyForecast(lat, lon,apiKey,units)
+        return MyResult.Success(result)
+    }
+
+    override suspend fun dailyForecast(
+        lat: Double,
+        lon: Double,
+        apiKey: String): MyResult<DailyResponse> {
+        val result = apiService.dailyForecast(lat, lon, apiKey)
         return MyResult.Success(result)
     }
 }

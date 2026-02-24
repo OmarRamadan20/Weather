@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,7 +59,8 @@ val GlassWhite = Color(0xFFFFFFFF).copy(alpha = 0.9f)
 fun WeatherScreen(
     weatherData: WeatherResponse,
     hourlyResponse: HourlyResponse,
-    dailyData: DailyResponse // التعديل هنا
+    dailyData: DailyResponse,
+    selectedLang: String
 ) {
     val forecastList = hourlyResponse.list?.filterNotNull() ?: emptyList()
     val dailyData = dailyData.list?.filterNotNull() ?: emptyList()
@@ -81,7 +83,7 @@ fun WeatherScreen(
             Spacer(modifier = Modifier.height(30.dp))
 
             // نبعت الـ list اللي جاية من الـ Pro API
-            HourlyForecastSection(hourlyData = forecastList)
+            HourlyForecastSection(hourlyData = forecastList, selectedLang = selectedLang)
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -94,7 +96,7 @@ fun WeatherScreen(
             Spacer(modifier = Modifier.height(30.dp))
 
             // تريكة اليومي: بما إن الـ Pro بيدينا ساعات، هنعرض أول عنصر من كل يوم
-            DailyForecastSection(dailyData = dailyData) // محتاجة تعديل بسيط في الموديل داخل الفانكشن
+            DailyForecastSection(dailyData = dailyData,selectedLang = selectedLang) // محتاجة تعديل بسيط في الموديل داخل الفانكشن
 
             Spacer(modifier = Modifier.height(40.dp))
         }
@@ -130,7 +132,9 @@ fun MainWeatherCard(weather: WeatherResponse) {
             }
 
             Column(
-                modifier = Modifier.fillMaxSize().padding(30.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(30.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -165,10 +169,19 @@ fun MainWeatherCard(weather: WeatherResponse) {
     }
 }
 @Composable
-fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourly.ListItem>) {
+fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourly.ListItem>,
+                          selectedLang: String) {
+
+    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true) || selectedLang == "Arabic") {
+        Locale("ar")
+    } else {
+        Locale("en")
+    }
+
+    val headerText = if (currentLocale.language == "ar") "التوقعات الساعية" else "Hourly Forecast"
     Column {
         Text(
-            text = "Hourly Forecast", // خليها أوضح
+            text = headerText,
             fontSize = 20.sp,
             fontWeight = FontWeight.Black,
             color = Color(0xFF2D3142),
@@ -235,10 +248,12 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxSize().padding(vertical = 12.dp)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 12.dp)
                     ) {
                         Text(
-                            text = formatToHour(item.dt?.toInt()),
+                            text = formatToHour(item.dt?.toInt(), currentLocale),
                             fontSize = 13.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
@@ -277,7 +292,8 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
 }
 
 @Composable
-fun DailyForecastSection(dailyData: List<com.example.weather.data.models.daily.ListItem>) {
+fun DailyForecastSection(dailyData: List<com.example.weather.data.models.daily.ListItem>,
+                         selectedLang: String) {
     if (dailyData.isEmpty()) return
 
     Column(
@@ -286,7 +302,7 @@ fun DailyForecastSection(dailyData: List<com.example.weather.data.models.daily.L
             .fillMaxWidth()
     ) {
         Text(
-            text = "Next 7 Days",
+            text = stringResource(R.string.next_7_days),
             style = TextStyle(
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
@@ -296,23 +312,32 @@ fun DailyForecastSection(dailyData: List<com.example.weather.data.models.daily.L
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // ركز هنا.. هنلف على الداتا ونعرضها بشكل "نظيف"
         dailyData.take(7).forEachIndexed { index, day ->
-            DailyWeatherCard(day, index)
+            DailyWeatherCard(day, index, selectedLang)
             Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index: Int) {
-    // حل مشكلة الداتا اللي بتضرب (الـ Number Casting)
+fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index: Int, selectedLang: String) {
+
+    val timestamp = (day.dt?.toLong() ?: 0L) * 1000L
+
+    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true) || selectedLang == "Arabic") {
+        Locale("ar")
+    } else {
+        Locale("en")
+    }
+
+    val sdf = SimpleDateFormat("EEEE", currentLocale)
+
+    // ترجمة كلمة Today يدوياً عشان تهرب من الـ Hardcoding
+
     val maxTemp = (day.temp?.max as? Number)?.toInt() ?: 0
     val minTemp = (day.temp?.min as? Number)?.toInt() ?: 0
 
     // تحويل التاريخ
-    val timestamp = (day.dt?.toLong() ?: 0L) * 1000L
-    val sdf = SimpleDateFormat("EEEE", Locale.ENGLISH)
     val dayName = if (index == 0) "Today" else sdf.format(Date(timestamp))
 
     // الأيقونة (تأكد من كتابة الرابط صح)
@@ -376,7 +401,10 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 // بار صغير بيفصل بينهم بشكل جمالي
-                Box(modifier = Modifier.width(2.dp).height(20.dp).background(Color.LightGray.copy(alpha = 0.5f)))
+                Box(modifier = Modifier
+                    .width(2.dp)
+                    .height(20.dp)
+                    .background(Color.LightGray.copy(alpha = 0.5f)))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "$minTemp°",
@@ -445,9 +473,13 @@ fun DetailBox(
         color = Color.White
     ) {
         // خلفية ملونة خفيفة جداً داخل الكارت
-        Box(modifier = Modifier.background(Brush.verticalGradient(gradient)).fillMaxSize()) {
+        Box(modifier = Modifier
+            .background(Brush.verticalGradient(gradient))
+            .fillMaxSize()) {
             Column(
-                modifier = Modifier.padding(20.dp).fillMaxSize(),
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.Start // المحاذاة للشمال أشيك في الكروت الصغيرة
             ) {
@@ -583,7 +615,14 @@ fun SunInfoItem(title: String, time: String, icon: Int, accentColor: Color) {
 }
 
 fun formatDate(t: Int?): String = t?.let { SimpleDateFormat("EEEE, d MMMM", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
-fun formatToHour(t: Int?): String = t?.let { SimpleDateFormat("ha", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
+// عدلها في ملف الـ Utils أو تحت الـ Screen
+fun formatToHour(t: Int?, locale: Locale = Locale.getDefault()): String {
+    return t?.let {
+        // بنباصي الـ locale للـ SimpleDateFormat
+        val sdf = SimpleDateFormat("ha", locale)
+        sdf.format(Date(it.toLong() * 1000))
+    } ?: ""
+}
 fun formatTime(t: Int?): String = t?.let { SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
 
 
@@ -617,7 +656,9 @@ fun RainAnimation() {
         }
     }
 
-    Canvas(modifier = Modifier.fillMaxSize().alpha(0.45f)) {
+    Canvas(modifier = Modifier
+        .fillMaxSize()
+        .alpha(0.45f)) {
         rainDrops.forEach { (xRatio, yOffsetRatio, speedMultiplier) ->
             val x = (xRatio / 1000f) * size.width
             val currentProgress = (progress * speedMultiplier + yOffsetRatio / 1000f) % 1f
@@ -766,7 +807,9 @@ fun SunnyAnimation(temp: Int) {
                 .background(
                     Brush.radialGradient(
                         0.0f to Color.White.copy(alpha = glowIntensity),
-                        0.6f to (if (isExtremelyHot) Color(0xFFFF7043) else Color(0xFFFFE082)).copy(alpha = 0.3f),
+                        0.6f to (if (isExtremelyHot) Color(0xFFFF7043) else Color(0xFFFFE082)).copy(
+                            alpha = 0.3f
+                        ),
                         1.0f to Color.Transparent
                     ),
                     CircleShape
@@ -814,7 +857,9 @@ fun SnowAnimation() {
         }
     }
 
-    Canvas(modifier = Modifier.fillMaxSize().alpha(0.8f)) {
+    Canvas(modifier = Modifier
+        .fillMaxSize()
+        .alpha(0.8f)) {
         val width = size.width
         val height = size.height
 
@@ -864,7 +909,9 @@ fun LuxuryWeatherPreview() {
 @Preview(showBackground = true)
 @Composable
 fun IndividualDetailPreview() {
-    Box(modifier = Modifier.padding(20.dp).background(SoftBlue)) {
+    Box(modifier = Modifier
+        .padding(20.dp)
+        .background(SoftBlue)) {
         DetailBox(
             modifier = Modifier.width(160.dp),
             title = "Wind Speed",

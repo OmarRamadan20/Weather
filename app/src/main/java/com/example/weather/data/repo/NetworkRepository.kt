@@ -26,5 +26,6 @@ interface NetworkRepository {
         lat: Double,
         lon: Double,
         apiKey: String,
+        lang: String
         ): MyResult<DailyResponse>
 }

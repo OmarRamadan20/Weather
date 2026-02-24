@@ -54,6 +54,8 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.remote.creation.core)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -93,4 +95,10 @@ dependencies {
 
 
     implementation ("com.github.bumptech.glide:compose:1.0.0-beta01")
+
+    implementation ("androidx.compose.material:material-icons-extended")
+    // أو لو بتستخدم الـ BOM (وده الأفضل)
+    implementation ("androidx.compose.material:material-icons-extended")
+
+
 }

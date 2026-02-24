@@ -29,8 +29,11 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
     override suspend fun dailyForecast(
         lat: Double,
         lon: Double,
-        apiKey: String
+        apiKey: String,
+        lang: String
         ): MyResult<DailyResponse> {
-        return dataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey)
+        return dataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey, lang = lang)
     }
+
+
 }

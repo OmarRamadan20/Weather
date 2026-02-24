@@ -32,7 +32,10 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
             try {
                 val weatherResult = repository.getCurrentWeather(lat, lon, apiKey, units, lang)
                 val hourlyResponse = repository.getHourlyForecast(lat, lon, apiKey, units)
-                val dailyResponse = repository.dailyForecast(lat, lon, apiKey)
+                val dailyResponse = repository.dailyForecast(lat, lon, apiKey, lang)
+
+                _weatherState.value = weatherResult
+                _hourlyState.value = hourlyResponse
                 _dailyState.value = dailyResponse
 
                 _weatherState.value = weatherResult
@@ -46,5 +49,22 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
                 _dailyState.value = MyResult.Error(errorMessage)
             }
         }
+    }
+    private var lastLat = 29.8319
+    private var lastLon = 31.3601
+
+
+    fun fetchWeatherWithNewSettings(
+        units: String? = null,
+        lang: String? = null
+    ) {
+
+        fetchWeather(
+            lat = lastLat,
+            lon = lastLon,
+            apiKey = "a50b3547c713e7be1ec57c696006497f",
+            units = units?:"",
+            lang = lang?:"ar"
+        )
     }
 }

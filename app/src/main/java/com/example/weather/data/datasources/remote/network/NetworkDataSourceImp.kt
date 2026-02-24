@@ -30,8 +30,10 @@ class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDa
     override suspend fun dailyForecast(
         lat: Double,
         lon: Double,
-        apiKey: String): MyResult<DailyResponse> {
-        val result = apiService.dailyForecast(lat, lon, apiKey)
+        apiKey: String,
+        lang: String
+    ): MyResult<DailyResponse> {
+        val result = apiService.dailyForecast(lat, lon, apiKey,lang)
         return MyResult.Success(result)
     }
 }

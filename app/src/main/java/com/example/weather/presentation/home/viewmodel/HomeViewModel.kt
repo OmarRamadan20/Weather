@@ -83,5 +83,18 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
         )
     }
 
+    fun fetchWeatherForLocation(lat: Double, lon: Double) {
+        lastLat = lat
+        lastLon = lon
+
+        fetchWeather(
+            lat = lat,
+            lon = lon,
+            apiKey = "a50b3547c713e7be1ec57c696006497f",
+            units = selectedUnit.value,
+            lang = selectedLang.value
+        )
+    }
+
 
 }

@@ -25,8 +25,20 @@ class SettingsViewModel(
     val isGpsEnabled: StateFlow<Boolean> = _isGpsEnabled
 
 
+    private val _isMapVisible = MutableStateFlow(false)
+    val isMapVisible: StateFlow<Boolean> = _isMapVisible
 
 
+
+
+    fun showMap() {
+        _isMapVisible.value = true
+    }
+
+    // دالة لإغلاق الخريطة
+    fun hideMap() {
+        _isMapVisible.value = false
+    }
     fun updateUnits(apiUnit: String) {
         _tempUnit.value = apiUnit
         homeViewModel.fetchWeatherWithNewSettings(units = apiUnit, lang = language.value)
@@ -60,8 +72,11 @@ class SettingsViewModel(
         homeViewModel.fetchWeatherWithNewSettings(units=unit)
     }
 
-    fun getWeatherByMaps(){
-        homeViewModel.fetchWeatherWithNewSettings(units = tempUnit.value, lang = language.value)
+    fun getWeatherByMaps(latitude: Double, longitude: Double) {
+        homeViewModel.fetchWeatherForLocation(latitude, longitude)
+        hideMap()
 
     }
+
+
 }

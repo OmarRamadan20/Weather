@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">الطقس</string>
+    <string name="settings">الإعدادات</string>
+    <string name="temp_unit">وحدة قياس الحرارة</string>
+    <string name="location_source">مصدر الموقع</string>
+    <string name="use_gps">استخدام GPS للموقع</string>
+    <string name="manual_map">أو اختر يدوياً من الخريطة</string>
+    <string name="wind_speed_unit">وحدة سرعة الرياح</string>
+    <string name="language">اللغة</string>
+    <string name="celsius">سيليزيوس</string>
+    <string name="kelvin">كيلفين</string>
+    <string name="fahrenheit">فهرنهايت</string>
+    <string name="arabic">العربية</string>
+    <string name="english">الإنجليزية</string>
+    <string name="m_s">م/س</string>
+    <string name="mph">ميل/ساعه</string>
+    <string name="use_gps_for_location">استخدام GPS للموقع</string>
+    <string name="or_select_manually_on_map">أو حدد يدويًا على الخريطة</string>
+
+
+    <string name="today">اليوم</string>
+    <string name="next_7_days">توقعات 7 أيام</string>
+    <string name="hourly_forecast">توقعات الساعات</string>
+    <string name="wind_speed">سرعه الرياح</string>
+    <string name="humidity">الرطوبه</string>
+
+    <string name="sunrise">الشروق</string>
+    <string name="sunset">الغروب</string>
+    <string name="metric_label">مترية</string>
+    <string name="imperial_label">إمبراطورية</string>
+    <string name="standard_label">قياسية</string>
+
+</resources>

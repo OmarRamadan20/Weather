@@ -51,6 +51,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.remote.creation.core)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -87,6 +92,16 @@ dependencies {
     implementation(libs.glide.compose)
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
+
+
+    implementation ("com.github.bumptech.glide:compose:1.0.0-beta01")
+
+    implementation ("androidx.compose.material:material-icons-extended")
+    // أو لو بتستخدم الـ BOM (وده الأفضل)
+    implementation ("androidx.compose.material:material-icons-extended")
+
+
+    implementation("com.google.maps.android:maps-compose:4.3.3")
 
 
 }

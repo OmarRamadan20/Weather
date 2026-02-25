@@ -1,6 +1,7 @@
 package com.example.weather.data.config.network
 
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.data.models.daily.DailyResponse
+import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.forecast.ForecastResponse
 import com.example.weather.data.models.weather.WeatherResponse
 import retrofit2.http.GET
@@ -13,15 +14,27 @@ interface WeatherApiService {
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric",
-        @Query("lang") lang: String = "en"
+        @Query("units") units: String ,
+        @Query("lang") lang: String
     ): WeatherResponse
 
 
-    @GET("forecast")
-    suspend fun getForecast(
-        @Query("q") cityName: String,
+    @GET("forecast/daily")
+    suspend fun dailyForecast(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
         @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric"
-    ): ForecastResponse
+        @Query("lang") lang: String,
+        @Query("units") units: String,
+        @Query("cnt") count: Int = 7
+    ): DailyResponse
+
+    @GET("forecast/hourly")
+    suspend fun getHourlyForecast(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("appid") apiKey: String,
+        @Query("units") units: String,
+        @Query("cnt") count: Int = 24
+    ): HourlyResponse
 }

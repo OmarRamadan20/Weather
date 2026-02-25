@@ -15,7 +15,7 @@ data class ListItem(
 	val dt: Int? = null,
 
     @field:SerializedName("pop")
-	val pop: Int? = null,
+	val pop: Double? = null,
 
     @field:SerializedName("visibility")
 	val visibility: Int? = null,
@@ -36,5 +36,9 @@ data class ListItem(
 	val sys: Sys? = null,
 
     @field:SerializedName("wind")
-	val wind: Wind? = null
+	val wind: Wind? = null,
+
+    @field:SerializedName("temp")
+    val temp: Double? = null
+
 ) : Parcelable

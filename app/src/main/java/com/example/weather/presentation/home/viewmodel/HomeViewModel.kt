@@ -13,6 +13,10 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
 
+    companion object {
+        private var savedUnit: String = "metric"
+        private var savedLang: String = "en"
+    }
     private val _weatherState = MutableStateFlow<MyResult<WeatherResponse>>(MyResult.Loading)
     val weatherState = _weatherState.asStateFlow()
 
@@ -21,6 +25,11 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
 
     private val _dailyState = MutableStateFlow<MyResult<DailyResponse>>(MyResult.Loading)
     val dailyState = _dailyState.asStateFlow()
+
+    val selectedLang = MutableStateFlow("en")
+
+    val selectedUnit = MutableStateFlow("metric")
+
 
 
     fun fetchWeather(lat: Double, lon: Double, apiKey: String, units: String, lang: String) {
@@ -32,7 +41,7 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
             try {
                 val weatherResult = repository.getCurrentWeather(lat, lon, apiKey, units, lang)
                 val hourlyResponse = repository.getHourlyForecast(lat, lon, apiKey, units)
-                val dailyResponse = repository.dailyForecast(lat, lon, apiKey, lang)
+                val dailyResponse = repository.dailyForecast(lat, lon, apiKey, lang, units)
 
                 _weatherState.value = weatherResult
                 _hourlyState.value = hourlyResponse
@@ -58,13 +67,21 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
         units: String? = null,
         lang: String? = null
     ) {
+        units?.let { savedUnit = it }
+        lang?.let { savedLang = it }
+
+        selectedUnit.value = savedUnit
+        selectedLang.value = savedLang
+
 
         fetchWeather(
             lat = lastLat,
             lon = lastLon,
             apiKey = "a50b3547c713e7be1ec57c696006497f",
-            units = units?:"",
-            lang = lang?:"ar"
+            units = savedUnit,
+            lang = savedLang
         )
     }
+
+
 }

@@ -14,8 +14,8 @@ interface WeatherApiService {
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric",
-        @Query("lang") lang: String = "en"
+        @Query("units") units: String ,
+        @Query("lang") lang: String
     ): WeatherResponse
 
 
@@ -25,7 +25,7 @@ interface WeatherApiService {
         @Query("lon") lon: Double,
         @Query("appid") apiKey: String,
         @Query("lang") lang: String,
-        @Query("units") units: String = "metric",
+        @Query("units") units: String,
         @Query("cnt") count: Int = 7
     ): DailyResponse
 
@@ -34,7 +34,7 @@ interface WeatherApiService {
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric",
+        @Query("units") units: String,
         @Query("cnt") count: Int = 24
     ): HourlyResponse
 }

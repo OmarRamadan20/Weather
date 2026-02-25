@@ -31,9 +31,14 @@ class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDa
         lat: Double,
         lon: Double,
         apiKey: String,
-        lang: String
+        lang: String,
+        units: String
     ): MyResult<DailyResponse> {
-        val result = apiService.dailyForecast(lat, lon, apiKey,lang)
+        val result = apiService.dailyForecast(
+            lat, lon, apiKey, lang,
+            units = units,
+
+        )
         return MyResult.Success(result)
     }
 }

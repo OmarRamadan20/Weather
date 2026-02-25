@@ -4,17 +4,15 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val homeViewModel: HomeViewModel
 ) : ViewModel() {
 
-    private val _tempUnit = MutableStateFlow("Celsius")
+    private val _tempUnit = MutableStateFlow("metric")
     val tempUnit: StateFlow<String> = _tempUnit
 
     private val _windUnit = MutableStateFlow("m/s")
@@ -26,41 +24,44 @@ class SettingsViewModel(
     private val _isGpsEnabled = MutableStateFlow(true)
     val isGpsEnabled: StateFlow<Boolean> = _isGpsEnabled
 
-    fun updateTempUnit(unit: String) {
-        _tempUnit.value = unit
-        val apiUnit = when (unit) {
-            "Fahrenheit" -> "imperial"
-            "Kelvin" -> "standard"
-            else -> "metric"
-        }
-        homeViewModel.fetchWeatherWithNewSettings(units = apiUnit)
+
+
+
+    fun updateUnits(apiUnit: String) {
+        _tempUnit.value = apiUnit
+        homeViewModel.fetchWeatherWithNewSettings(units = apiUnit, lang = language.value)
     }
 
-    fun updateLanguage(selectedName: String) {
-        // 1. حول الـ String اللي جالك للكود المناسب
-        val langCode = when (selectedName) {
-            "Arabic", "العربية" -> "ar"
-            "English", "الإنجليزية" -> "en"
+    fun updateLanguage(langName: String) {
+        _language.value = langName
+
+        val langCode = when (langName) {
+            "ar" -> "ar"
+            "en" -> "en"
             else -> "ar"
         }
-        Log.d("SettingsViewModel", "Selected Language: $selectedName, Lang Code: $langCode")
 
-        _language.value = selectedName
 
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(langCode)
         AppCompatDelegate.setApplicationLocales(appLocale)
 
-        homeViewModel.fetchWeatherWithNewSettings(lang = langCode)
+        Log.d("SettingsViewModel", "${_tempUnit.value}")
+
+        homeViewModel.fetchWeatherWithNewSettings(lang = langCode, units = _tempUnit.value)
     }
 
     fun toggleGps(enabled: Boolean) {
         _isGpsEnabled.value = enabled
-        // لو قفل الـ GPS ممكن تفتح شاشة الخريطة مثلاً
+        //Open GPS
     }
 
     fun updateWindUnit(unit: String) {
         _windUnit.value = unit
         homeViewModel.fetchWeatherWithNewSettings(units=unit)
+    }
+
+    fun getWeatherByMaps(){
+        homeViewModel.fetchWeatherWithNewSettings(units = tempUnit.value, lang = language.value)
 
     }
 }

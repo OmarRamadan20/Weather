@@ -1,5 +1,6 @@
 package com.example.weather
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,7 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.weather.data.config.network.RetrofitClient
 import com.example.weather.data.datasources.remote.network.MyResult
@@ -38,6 +43,7 @@ import com.example.weather.presentation.home.view.WeatherScreen
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import com.example.weather.presentation.settings.view.SettingsScreen
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,57 +90,74 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel)
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val context = LocalContext.current
+    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
+        Locale("ar") else Locale("en")
 
-        when {
-            weatherState is MyResult.Loading || forecastState is MyResult.Loading || dailyState is MyResult.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
+    val configuration = Configuration(context.resources.configuration)
+    configuration.setLocale(currentLocale)
 
-            weatherState is MyResult.Success && forecastState is MyResult.Success && dailyState is MyResult.Success -> {
-                val weatherData = (weatherState as MyResult.Success).data
-                val hourlyData = (forecastState as MyResult.Success).data
-                val dailyData = (dailyState as MyResult.Success).data
+    val localizedContext = context.createConfigurationContext(configuration)
 
-                when (currentScreen) {
-                    "home" -> WeatherScreen(
-                        weatherData = weatherData,
-                        hourlyResponse = hourlyData,
-                        dailyData = dailyData,
-                        selectedLang = selectedLang
-                    )
+    CompositionLocalProvider(LocalContext provides localizedContext,
+        LocalLayoutDirection provides if (currentLocale.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr) {
 
-                    "settings" -> SettingsScreen(settingsViewModel)
-                    "fav" -> Text("Favorites Screen", modifier = Modifier.align(Alignment.Center))
-                    "alerts" -> Text("Alerts Screen", modifier = Modifier.align(Alignment.Center))
+
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            when {
+                weatherState is MyResult.Loading || forecastState is MyResult.Loading || dailyState is MyResult.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-            }
 
-            // حالات الـ Error
-            weatherState is MyResult.Error -> Text(
-                "Error: ${(weatherState as MyResult.Error).message}",
-                modifier = Modifier.align(Alignment.Center)
-            )
-            // ... باقي حالات الـ Error
-        }
+                weatherState is MyResult.Success && forecastState is MyResult.Success && dailyState is MyResult.Success -> {
+                    val weatherData = (weatherState as MyResult.Success).data
+                    val hourlyData = (forecastState as MyResult.Success).data
+                    val dailyData = (dailyState as MyResult.Success).data
 
-        // 2. الـ Bottom Nav (ثابت وعايم فوق أي شاشة)
-        // بنعرضه فقط لما الداتا تحمل بنجاح عشان شكله ميبقاش بضان والصفحة فاضية
-        if (weatherState is MyResult.Success && forecastState is MyResult.Success) {
-            Box(modifier = Modifier.align(Alignment.BottomCenter)) {
-                WeatherBottomBar(
-                    currentScreen = currentScreen,
-                    onNavigate = { newScreen -> currentScreen = newScreen }
+                    when (currentScreen) {
+                        "home" -> WeatherScreen(
+                            weatherData = weatherData,
+                            hourlyResponse = hourlyData,
+                            dailyData = dailyData,
+                            selectedLang = selectedLang
+                        )
+
+                        "settings" -> SettingsScreen(settingsViewModel)
+                        "fav" -> Text(
+                            "Favorites Screen",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+
+                        "alerts" -> Text(
+                            "Alerts Screen",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
+
+                weatherState is MyResult.Error -> Text(
+                    "Error: ${(weatherState as MyResult.Error).message}",
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
 
 
+            if (weatherState is MyResult.Success && forecastState is MyResult.Success) {
+                Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                    WeatherBottomBar(
+                        currentScreen = currentScreen,
+                        onNavigate = { newScreen -> currentScreen = newScreen }
+                    )
+                }
+
+
+            }
         }
     }
 }
     @Composable
     fun WeatherBottomBar(currentScreen: String, onNavigate: (String) -> Unit) {
-        // نستخدم Box عشان نخليه عايم فوق المحتوى
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -145,7 +168,7 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel)
                     .height(75.dp)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(38.dp),
-                color = Color.White.copy(alpha = 0.9f), // زجاجي أبيض
+                color = Color.White.copy(alpha = 0.9f),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                 shadowElevation = 25.dp
             ) {

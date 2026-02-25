@@ -30,9 +30,10 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
         lat: Double,
         lon: Double,
         apiKey: String,
-        lang: String
+        lang: String,
+        units: String
         ): MyResult<DailyResponse> {
-        return dataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey, lang = lang)
+        return dataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey, lang = lang, units = units)
     }
 
 

@@ -1,5 +1,6 @@
 package com.example.weather.presentation.home.view
 
+import android.content.res.Configuration
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -28,12 +29,15 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -62,43 +66,55 @@ fun WeatherScreen(
     dailyData: DailyResponse,
     selectedLang: String
 ) {
-    val forecastList = hourlyResponse.list?.filterNotNull() ?: emptyList()
-    val dailyData = dailyData.list?.filterNotNull() ?: emptyList()
 
+    val context = LocalContext.current
+    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
+        Locale("ar") else Locale("en")
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(SoftBlue, SoftPink)))
-    ) {
-        Column(
+    val configuration = Configuration(context.resources.configuration)
+    configuration.setLocale(currentLocale)
+
+    val localizedContext = context.createConfigurationContext(configuration)
+
+    CompositionLocalProvider(LocalContext provides localizedContext,
+        LocalLayoutDirection provides if (currentLocale.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr) {
+        val forecastList = hourlyResponse.list?.filterNotNull() ?: emptyList()
+        val dailyData = dailyData.list?.filterNotNull() ?: emptyList()
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Brush.verticalGradient(listOf(SoftBlue, SoftPink)))
         ) {
-            MainWeatherCard(weatherData)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                MainWeatherCard(weatherData)
 
-            Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
-            // نبعت الـ list اللي جاية من الـ Pro API
-            HourlyForecastSection(hourlyData = forecastList, selectedLang = selectedLang)
+                HourlyForecastSection(hourlyData = forecastList, selectedLang = selectedLang)
 
-            Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
-            WeatherDetailGrid(weatherData)
+                WeatherDetailGrid(weatherData)
 
-            Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
-            SunPhaseSection(weatherData)
+                SunPhaseSection(weatherData)
 
-            Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
-            // تريكة اليومي: بما إن الـ Pro بيدينا ساعات، هنعرض أول عنصر من كل يوم
-            DailyForecastSection(dailyData = dailyData,selectedLang = selectedLang) // محتاجة تعديل بسيط في الموديل داخل الفانكشن
-
-            Spacer(modifier = Modifier.height(40.dp))
+                DailyForecastSection(
+                    dailyData = dailyData,
+                    selectedLang = selectedLang
+                )
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }
@@ -178,10 +194,12 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
         Locale("en")
     }
 
-    val headerText = if (currentLocale.language == "ar") "التوقعات الساعية" else "Hourly Forecast"
+
+
+
     Column {
         Text(
-            text = headerText,
+            text = stringResource(id = R.string.hourly_forecast),
             fontSize = 20.sp,
             fontWeight = FontWeight.Black,
             color = Color(0xFF2D3142),
@@ -196,7 +214,6 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
                 val temp = item.main?.temp?.toInt() ?: 0
                 val itemColors = getTemperatureColors(temp)
 
-                // أنيميشن ناعم جداً للدرجة اللونية (توهج خفيف مش حركة عشوائية)
                 val infiniteTransition = rememberInfiniteTransition(label = "glow")
                 val alphaAnim by infiniteTransition.animateFloat(
                     initialValue = 0.7f,
@@ -209,7 +226,7 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
 
                 Box(
                     modifier = Modifier
-                        .width(85.dp) // زودنا العرض سنة عشان يبقى مريح
+                        .width(85.dp)
                         .height(160.dp)
                         .shadow(
                             elevation = 12.dp,
@@ -232,7 +249,6 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    // إضافة لمعة (Reflective Light) في زاوية الكارت
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -259,14 +275,12 @@ fun HourlyForecastSection(hourlyData: List<com.example.weather.data.models.hourl
                             fontWeight = FontWeight.Bold
                         )
 
-                        // أيقونة الطقس بتأثير 3D بسيط
                         AsyncImage(
                             model = "https://openweathermap.org/img/wn/${item.weather?.getOrNull(0)?.icon}@4x.png",
                             contentDescription = null,
                             modifier = Modifier
                                 .size(55.dp)
                                 .graphicsLayer {
-                                    // حركة خفيفة للأيقونة كأنها بتعوم
                                     translationY = (alphaAnim - 0.85f) * 20f
                                 }
                         )
@@ -296,13 +310,15 @@ fun DailyForecastSection(dailyData: List<com.example.weather.data.models.daily.L
                          selectedLang: String) {
     if (dailyData.isEmpty()) return
 
+    val header = if(selectedLang.contains("ar", ignoreCase = true) || selectedLang == "Arabic") "الايام القادمه" else "Next 7 Days"
+
     Column(
         modifier = Modifier
             .padding(horizontal = 22.dp, vertical = 20.dp)
             .fillMaxWidth()
     ) {
         Text(
-            text = stringResource(R.string.next_7_days),
+            text = header,
             style = TextStyle(
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
@@ -332,15 +348,15 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
 
     val sdf = SimpleDateFormat("EEEE", currentLocale)
 
-    // ترجمة كلمة Today يدوياً عشان تهرب من الـ Hardcoding
 
     val maxTemp = (day.temp?.max as? Number)?.toInt() ?: 0
     val minTemp = (day.temp?.min as? Number)?.toInt() ?: 0
 
-    // تحويل التاريخ
-    val dayName = if (index == 0) "Today" else sdf.format(Date(timestamp))
 
-    // الأيقونة (تأكد من كتابة الرابط صح)
+    val todayStr = stringResource(id = R.string.today)
+
+    val dayName = if (index == 0) todayStr else sdf.format(Date(timestamp))
+
     val iconCode = day.weather?.getOrNull(0)?.icon ?: "01d"
     val iconUrl = "https://openweathermap.org/img/wn/$iconCode@4x.png"
 
@@ -364,7 +380,6 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // 1. اليوم والتاريخ الصغير
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = dayName,
@@ -379,15 +394,13 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
                 )
             }
 
-            // 2. الصورة (هنا حل المشكلة: هنستخدم Crossfade عشان تظهر بنعومة)
             AsyncImage(
                 model = iconUrl,
                 contentDescription = "Weather Icon",
-                modifier = Modifier.size(60.dp), // كبّرنا الصورة شوية
+                modifier = Modifier.size(60.dp),
                 contentScale = ContentScale.Fit
             )
 
-            // 3. الحرارة بشكل "فاجر"
             Row(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.End,
@@ -400,7 +413,6 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
                     color = Color(0xFF2D3142)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                // بار صغير بيفصل بينهم بشكل جمالي
                 Box(modifier = Modifier
                     .width(2.dp)
                     .height(20.dp)
@@ -419,33 +431,32 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
 @Composable
 fun getTemperatureColors(temp: Int): List<Color> {
     return when {
-        temp <= 5 -> listOf(Color(0xFF1A237E), Color(0xFF5C6BC0)) // أزرق غامق جداً (ثلج)
-        temp in 6..15 -> listOf(Color(0xFF61A3CC), Color(0xFFA6C1EE)) // برد
-        temp in 16..27 -> listOf(Color(0xFFF6D365), Color(0xFFFDA085)) // ربيعي/دافئ
-        else -> listOf(Color(0xFFFF5F6D), Color(0xFFFFC371)) // ناري (حر)
+        temp <= 5 -> listOf(Color(0xFF1A237E), Color(0xFF5C6BC0))
+        temp in 6..15 -> listOf(Color(0xFF61A3CC), Color(0xFFA6C1EE))
+        temp in 16..27 -> listOf(Color(0xFFF6D365), Color(0xFFFDA085))
+        else -> listOf(Color(0xFFFF5F6D), Color(0xFFFFC371))
     }
 }
 
 @Composable
 fun WeatherDetailGrid(weather: WeatherResponse) {
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // كارت الرياح - واخد تاتش أزرق
         DetailBox(
             modifier = Modifier.weight(1f),
-            title = "Wind Speed",
+            title = stringResource(R.string.wind_speed),
             value = "${weather.wind?.speed}",
             unit = "km/h",
             icon = R.drawable.ic_wind,
             iconColor = Color(0xFF4FACFE),
             gradient = listOf(Color(0xFFE0F2F1), Color(0xFFFFFFFF))
         )
-        // كارت الرطوبة - واخد تاتش لبني/بنفسجي
         DetailBox(
             modifier = Modifier.weight(1f),
-            title = "Humidity",
+            title = stringResource(R.string.humidity),
             value = "${weather.main?.humidity}",
             unit = "%",
             icon = R.drawable.ic_humidity,
@@ -465,14 +476,14 @@ fun DetailBox(
     iconColor: Color,
     gradient: List<Color>
 ) {
+
     Surface(
         modifier = modifier
-            .height(140.dp) // زودنا الطول عشان التفاصيل تبان
+            .height(140.dp)
             .shadow(15.dp, RoundedCornerShape(35.dp), ambientColor = iconColor.copy(alpha = 0.3f)),
         shape = RoundedCornerShape(35.dp),
         color = Color.White
     ) {
-        // خلفية ملونة خفيفة جداً داخل الكارت
         Box(modifier = Modifier
             .background(Brush.verticalGradient(gradient))
             .fillMaxSize()) {
@@ -481,9 +492,8 @@ fun DetailBox(
                     .padding(20.dp)
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.Start // المحاذاة للشمال أشيك في الكروت الصغيرة
+                horizontalAlignment = Alignment.Start
             ) {
-                // الأيقونة ملونة وشيك
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -527,14 +537,14 @@ fun DetailBox(
 
 @Composable
 fun SunPhaseSection(weather: WeatherResponse) {
-    // تأثير الزجاج مع خلفية بيضاء شفافة
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp) // زودنا الطول سنة
+            .height(110.dp)
             .shadow(15.dp, RoundedCornerShape(35.dp), ambientColor = Color.Gray.copy(alpha = 0.2f)),
         shape = RoundedCornerShape(35.dp),
-        color = Color.White.copy(alpha = 0.9f) // درجة شفافية بسيطة
+        color = Color.White.copy(alpha = 0.9f)
     ) {
         Row(
             modifier = Modifier
@@ -543,15 +553,13 @@ fun SunPhaseSection(weather: WeatherResponse) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // شروق الشمس
             SunInfoItem(
                 title = "Sunrise",
                 time = formatTime(weather.sys?.sunrise),
                 icon = R.drawable.ic_sunrise,
-                accentColor = Color(0xFFFFB74D) // برتقالي للشروق
+                accentColor = Color(0xFFFFB74D)
             )
 
-            // فاصل شيك (Vertical Divider)
             Box(
                 modifier = Modifier
                     .width(1.5.dp)
@@ -564,12 +572,11 @@ fun SunPhaseSection(weather: WeatherResponse) {
                     )
             )
 
-            // غروب الشمس
             SunInfoItem(
                 title = "Sunset",
                 time = formatTime(weather.sys?.sunset),
                 icon = R.drawable.ic_sunset,
-                accentColor = Color(0xFFFF7043) // أحمر/برتقالي غامق للغروب
+                accentColor = Color(0xFFFF7043)
             )
         }
     }
@@ -615,10 +622,8 @@ fun SunInfoItem(title: String, time: String, icon: Int, accentColor: Color) {
 }
 
 fun formatDate(t: Int?): String = t?.let { SimpleDateFormat("EEEE, d MMMM", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
-// عدلها في ملف الـ Utils أو تحت الـ Screen
 fun formatToHour(t: Int?, locale: Locale = Locale.getDefault()): String {
     return t?.let {
-        // بنباصي الـ locale للـ SimpleDateFormat
         val sdf = SimpleDateFormat("ha", locale)
         sdf.format(Date(it.toLong() * 1000))
     } ?: ""
@@ -641,15 +646,14 @@ fun RainAnimation() {
         ), label = "rain_progress"
     )
 
-// الحل الأول: استخدام الـ ArrayList الصريحة
     val rainDrops = remember {
         ArrayList<Triple<Float, Float, Float>>().apply {
             repeat(70) {
                 add(
                     Triple(
-                        Random.nextInt(0, 1000).toFloat(), // مكان X عشوائي
-                        Random.nextInt(0, 1000).toFloat(), // إزاحة Y عشوائية
-                        Random.nextFloat() * (1.5f - 0.5f) + 0.5f // سرعة عشوائية بين 0.5 و 1.5
+                        Random.nextInt(0, 1000).toFloat(),
+                        Random.nextInt(0, 1000).toFloat(),
+                        Random.nextFloat() * (1.5f - 0.5f) + 0.5f
                     )
                 )
             }
@@ -678,17 +682,15 @@ fun RainAnimation() {
 fun CloudAnimation() {
     val transition = rememberInfiniteTransition(label = "clouds")
 
-    // أنيميشن الحركة الأفقية
     val fastOffset by transition.animateFloat(
         initialValue = -200f,
-        targetValue = 600f, // زودنا المدى عشان تطلع وتدخل براحتها
+        targetValue = 600f,
         animationSpec = infiniteRepeatable(
             animation = tween(18000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ), label = "fastCloud"
     )
 
-    // أنيميشن النبض (Pulse)
     val cloudPulse by transition.animateFloat(
         initialValue = 0.9f,
         targetValue = 1.1f,
@@ -698,10 +700,8 @@ fun CloudAnimation() {
         ), label = "pulse"
     )
 
-    // شيلنا الـ alpha من هنا عشان نتحكم فيها جوه كل سحابة براحتنا
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // سحابة 1 (كبيرة وواضحة في النص)
         CloudShapePro(
             size = 280.dp,
             modifier = Modifier
@@ -711,12 +711,11 @@ fun CloudAnimation() {
                 .alpha(0.7f) // وضوح عالي
         )
 
-        // سحابة 2 (أصغر ومزوية)
         CloudShapePro(
             size = 180.dp,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = (-fastOffset / 2).dp, y = 80.dp) // بتتحرك عكس
+                .offset(x = (-fastOffset / 2).dp, y = 80.dp)
                 .scale(cloudPulse * 0.8f)
                 .alpha(0.5f)
         )
@@ -725,9 +724,7 @@ fun CloudAnimation() {
 
 @Composable
 fun CloudShapePro(size: Dp, modifier: Modifier = Modifier) {
-    // سر الـ "فجر": بنحط كذا دائرة فوق بعض بـ Blur مختلف عشان نعمل كثافة
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
-        // الطبقة الخارجية (النفشة)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -736,9 +733,8 @@ fun CloudShapePro(size: Dp, modifier: Modifier = Modifier) {
                         colors = listOf(Color.White.copy(alpha = 0.6f), Color.Transparent)
                     ), CircleShape
                 )
-                .blur(40.dp) // Blur أقل عشان متختفيش
+                .blur(40.dp)
         )
-        // الطبقة الداخلية (قلب السحابة التقيل)
         Box(
             modifier = Modifier
                 .fillMaxSize(0.6f)
@@ -756,8 +752,8 @@ fun SunnyAnimation(temp: Int) {
     val infiniteTransition = rememberInfiniteTransition(label = "pro_sun")
 
     val isExtremelyHot = temp > 28
-    val rotationDuration = if (isExtremelyHot) 10000 else 20000 // دوران أسرع في الحر الجامد
-    val glowIntensity = if (isExtremelyHot) 0.8f else 0.4f // توهج أقوى
+    val rotationDuration = if (isExtremelyHot) 10000 else 20000
+    val glowIntensity = if (isExtremelyHot) 0.8f else 0.4f
 
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -770,7 +766,7 @@ fun SunnyAnimation(temp: Int) {
 
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (isExtremelyHot) 1.5f else 1.2f, // نبض أقوى في الحر
+        targetValue = if (isExtremelyHot) 1.5f else 1.2f,
         animationSpec = infiniteRepeatable(
             animation = tween(if (isExtremelyHot) 2000 else 4000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse

@@ -18,6 +18,17 @@
     <string name="use_gps_for_location">استخدام GPS للموقع</string>
     <string name="or_select_manually_on_map">أو حدد يدويًا على الخريطة</string>
 
-    <string name="next_7_days">الأيام السبعة القادمة</string>
+
+    <string name="today">اليوم</string>
+    <string name="next_7_days">توقعات 7 أيام</string>
+    <string name="hourly_forecast">توقعات الساعات</string>
+    <string name="wind_speed">سرعه الرياح</string>
+    <string name="humidity">الرطوبه</string>
+
+    <string name="sunrise">الشروق</string>
+    <string name="sunset">الغروب</string>
+    <string name="metric_label">مترية</string>
+    <string name="imperial_label">إمبراطورية</string>
+    <string name="standard_label">قياسية</string>
 
 </resources>

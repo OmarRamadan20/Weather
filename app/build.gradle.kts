@@ -101,4 +101,7 @@ dependencies {
     implementation ("androidx.compose.material:material-icons-extended")
 
 
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+
+
 }

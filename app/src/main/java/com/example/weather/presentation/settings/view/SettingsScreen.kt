@@ -1,6 +1,6 @@
 package com.example.weather.presentation.settings.view
 
-import android.R.attr.onClick
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,12 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weather.R
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -51,6 +56,18 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val selectedLang by viewModel.language.collectAsState()
     val useGPS by viewModel.isGpsEnabled.collectAsState()
 
+    val context = LocalContext.current
+    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
+        Locale("ar") else Locale("en")
+
+    val configuration = Configuration(context.resources.configuration)
+    configuration.setLocale(currentLocale)
+
+    val localizedContext = context.createConfigurationContext(configuration)
+
+    CompositionLocalProvider(LocalContext provides localizedContext,
+        LocalLayoutDirection provides if (currentLocale.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -58,7 +75,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             .padding(20.dp)
     ) {
         Text(
-            text = "Settings",
+            text = stringResource(R.string.settings),
             fontSize = 32.sp,
             fontWeight = FontWeight.Black,
             color = Color(0xFF2D3142),
@@ -66,12 +83,48 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         )
 
         SettingsCard(title = stringResource(R.string.temp_unit)) {
-            SegmentedControl(
-                options = listOf(stringResource(R.string.celsius), stringResource(R.string.fahrenheit),
-                    stringResource(R.string.kelvin)),
-                selectedOption = tempUnit,
-                onOptionSelected = { viewModel.updateTempUnit(it) }
+            val unitOptions = listOf(
+                Triple("metric", stringResource(R.string.metric_label), stringResource(R.string.celsius)+" "+ " "+ stringResource(R.string.m_s)),
+                Triple("imperial", stringResource(R.string.imperial_label), stringResource(R.string.fahrenheit)+" "+ " "+ stringResource(R.string.mph)),
+                Triple("standard", stringResource(R.string.standard_label), stringResource(R.string.kelvin)+" "+ " "+ stringResource(R.string.m_s))
             )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(Color.Gray.copy(alpha = 0.1f))
+                    .padding(4.dp)
+            ) {
+                unitOptions.forEach { option ->
+                    val (apiCode, label, symbol) = option
+                    val isSelected = tempUnit == apiCode
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) Color.White else Color.Transparent)
+                            .clickable { viewModel.updateUnits(apiCode) }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = label,
+                                color = if (isSelected) Color(0xFF3F51B5) else Color.Gray,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = "($symbol)",
+                                color = if (isSelected) Color(0xFF3F51B5).copy(alpha = 0.7f) else Color.Gray,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         SettingsCard(title = stringResource(R.string.location_source)) {
@@ -85,7 +138,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 text = stringResource(R.string.or_select_manually_on_map),
                 color = Color(0xFF3F51B5),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { /* افتح الخريطة */ }
+                modifier = Modifier.clickable {
+
+                    viewModel.getWeatherByMaps()
+                }
             )
         }
 
@@ -94,15 +150,18 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         SettingsCard(title = stringResource(R.string.language)) {
             var expanded by remember { mutableStateOf(false) }
 
-            // اللستة اللي فيها الاسم المترجم والكود
             val languages = listOf(
                 stringResource(R.string.english) to "en",
                 stringResource(R.string.arabic) to "ar"
             )
+            val displayText = if (selectedLang.contains("ar", ignoreCase = true))
+                stringResource(R.string.arabic)
+            else
+                stringResource(R.string.english)
 
             Box {
                 Text(
-                    text = selectedLang, // القيمة اللي جاية من الـ ViewModel
+                    text = displayText,
                     color = Color(0xFF3F51B5),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
@@ -111,7 +170,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         .padding(vertical = 8.dp)
                 )
 
-                // لازم الـ DropdownMenu يكون شايل الـ Items جواه
+
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
@@ -119,9 +178,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 ) {
                     languages.forEach { lang ->
                         DropdownMenuItem(
-                            text = { Text(text = lang.first) }, // بيعرض الاسم (English أو العربية)
+                            text = { Text(text = lang.first) },
                             onClick = {
-                                viewModel.updateLanguage(lang.first) // بيبعت الاسم للـ ViewModel
+                                viewModel.updateLanguage(lang.second)
                                 expanded = false
                             }
                         )
@@ -131,6 +190,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         }
 
         Spacer(modifier = Modifier.height(100.dp))
+    }
     }
 }
 

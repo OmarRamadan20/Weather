@@ -19,4 +19,16 @@
 
     <string name="or_select_manually_on_map">Or select manually on map</string>
     <string name="next_7_days">Next 7 Days</string>
+    <string name="hourly_forecast">Hourly Forecast</string>
+    <string name="today">Today</string>
+
+
+    <string name="wind_speed">Wind Speed</string>
+    <string name="humidity">Humidity</string>
+    <string name="sunrise">Sunrise</string>
+    <string name="sunset">Sunset</string>
+    <string name="metric_label">Metric</string>
+    <string name="imperial_label">Imperial</string>
+    <string name="standard_label">Standard</string>
+
 </resources>

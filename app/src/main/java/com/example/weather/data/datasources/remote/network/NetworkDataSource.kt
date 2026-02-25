@@ -10,15 +10,15 @@ interface NetworkDataSource {
         lat: Double,
         lon: Double,
         apiKey: String,
-        units: String = "metric",
-        lang: String = "en")
+        units: String,
+        lang: String)
     : MyResult<WeatherResponse>
 
     suspend fun getHourlyForecast(
         lat: Double,
         lon: Double,
         apiKey: String,
-        units: String = "metric"
+        units: String
     ): MyResult<HourlyResponse>
 
 
@@ -26,6 +26,7 @@ interface NetworkDataSource {
         lat: Double,
         lon: Double,
         apiKey: String,
-        lang: String
+        lang: String,
+        units: String
     ): MyResult<DailyResponse>
 }

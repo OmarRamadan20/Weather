@@ -4,12 +4,20 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.data.models.map.CityResponse
+import com.example.weather.data.models.map.CityResponseItem
+import com.example.weather.data.repo.NetworkRepository
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val homeViewModel: HomeViewModel
+    private val homeViewModel: HomeViewModel,
+    private val repository: NetworkRepository
 ) : ViewModel() {
 
     private val _tempUnit = MutableStateFlow("metric")
@@ -28,6 +36,12 @@ class SettingsViewModel(
     private val _isMapVisible = MutableStateFlow(false)
     val isMapVisible: StateFlow<Boolean> = _isMapVisible
 
+    private val _citySuggestions = MutableStateFlow<MyResult<List<CityResponseItem>>>(MyResult.Success(emptyList()))
+    val citySuggestions = _citySuggestions.asStateFlow()
+
+
+
+
 
 
 
@@ -35,7 +49,6 @@ class SettingsViewModel(
         _isMapVisible.value = true
     }
 
-    // دالة لإغلاق الخريطة
     fun hideMap() {
         _isMapVisible.value = false
     }
@@ -79,4 +92,28 @@ class SettingsViewModel(
     }
 
 
+    fun searchCities(query: String) {
+        Log.d("MapSearch", "Searching for: $query")
+        if (query.trim().length < 3) {
+            _citySuggestions.value = MyResult.Success(emptyList())
+            return
+        }
+
+        viewModelScope.launch {
+            _citySuggestions.value = MyResult.Loading
+            try {
+                val results = repository.getCitySuggestions(query= query,8, apiKey = "a50b3547c713e7be1ec57c696006497f")
+                Log.d("MapSearch", "Results count: ${results}")
+                _citySuggestions.value = results
+            } catch (e: Exception) {
+                Log.e("MapSearch", "Error: ${e.message}")
+                _citySuggestions.value = MyResult.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun onCitySelected(city: CityResponseItem?) {
+        getWeatherByMaps(city?.lat?: 0.0, city?.lon?:0.0)
+        _citySuggestions.value = MyResult.Success(emptyList())
+    }
 }

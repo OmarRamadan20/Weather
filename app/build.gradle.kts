@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.remote.creation.core)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.compose.ui.text)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -103,6 +104,9 @@ dependencies {
 
     implementation("com.google.maps.android:maps-compose:4.3.3")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+
+    implementation("com.google.android.libraries.places:places:3.3.0")
 
 
 }

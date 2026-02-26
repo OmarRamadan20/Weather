@@ -3,6 +3,8 @@ package com.example.weather.data.datasources.remote.network
 import com.example.weather.data.config.network.WeatherApiService
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
+import com.example.weather.data.models.map.CityResponse
+import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
 
 class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDataSource {
@@ -40,5 +42,18 @@ class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDa
 
         )
         return MyResult.Success(result)
+    }
+
+
+    override suspend fun getCitySuggestions(
+        query: String,
+        limit: Int,
+        apiKey: String): MyResult<List<CityResponseItem>>{
+        return try {
+            val response = apiService.getCitySuggestions(query, limit, apiKey)
+            MyResult.Success(response)
+        } catch (e: Exception) {
+            MyResult.Error(e.message ?: "Unknown error")
+        }
     }
 }

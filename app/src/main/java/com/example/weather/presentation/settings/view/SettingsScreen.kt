@@ -1,6 +1,5 @@
 package com.example.weather.presentation.settings.view
 
-import MapPickerScreen
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -19,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -40,12 +40,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val isMapVisible by viewModel.isMapVisible.collectAsState()
 
     val context = LocalContext.current
-    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
-        Locale("ar") else Locale("en")
-
+    val currentLocale = if (selectedLang.contains("ar", ignoreCase = true)) Locale("ar") else Locale("en")
     val configuration = Configuration(context.resources.configuration)
     configuration.setLocale(currentLocale)
-
     val localizedContext = context.createConfigurationContext(configuration)
 
     CompositionLocalProvider(
@@ -74,18 +71,40 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         Triple("imperial", stringResource(R.string.imperial_label), stringResource(R.string.fahrenheit) + " " + stringResource(R.string.mph)),
                         Triple("standard", stringResource(R.string.standard_label), stringResource(R.string.kelvin) + " " + stringResource(R.string.m_s))
                     )
+
                     Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(Color.Gray.copy(alpha = 0.1f)).padding(4.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(15.dp))
+                            .background(Color.Gray.copy(alpha = 0.1f))
+                            .padding(4.dp)
                     ) {
                         unitOptions.forEach { option ->
                             val isSelected = tempUnit == option.first
+
                             Box(
-                                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (isSelected) Color.White else Color.Transparent).clickable { viewModel.updateUnits(option.first) }.padding(vertical = 12.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) Color.White else Color.Transparent)
+                                    .clickable {
+                                        viewModel.updateUnits(option.first)
+                                    }
+                                    .padding(vertical = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(text = option.second, color = if (isSelected) Color(0xFF3F51B5) else Color.Gray, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                    Text(text = "(${option.third})", color = if (isSelected) Color(0xFF3F51B5).copy(alpha = 0.7f) else Color.Gray, fontSize = 10.sp)
+                                    Text(
+                                        text = option.second,
+                                        color = if (isSelected) Color(0xFF3F51B5) else Color.Gray,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                    Text(
+                                        text = "(${option.third})",
+                                        color = if (isSelected) Color(0xFF3F51B5).copy(alpha = 0.7f) else Color.Gray,
+                                        fontSize = 10.sp
+                                    )
                                 }
                             }
                         }
@@ -110,13 +129,64 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
                 SettingsCard(title = stringResource(R.string.language)) {
                     var expanded by remember { mutableStateOf(false) }
-                    val displayText = if (selectedLang.contains("ar", ignoreCase = true)) stringResource(R.string.arabic) else stringResource(R.string.english)
 
-                    Box {
-                        Text(text = displayText, color = Color(0xFF3F51B5), fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth().clickable { expanded = true }.padding(vertical = 8.dp))
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.background(Color.White)) {
-                            listOf(stringResource(R.string.english) to "en", stringResource(R.string.arabic) to "ar").forEach { lang ->
-                                DropdownMenuItem(text = { Text(text = lang.first) }, onClick = { viewModel.updateLanguage(lang.second); expanded = false })
+                    val displayText = if (selectedLang.contains("ar", ignoreCase = true))
+                        stringResource(R.string.arabic)
+                    else
+                        stringResource(R.string.english)
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedCard(
+                            onClick = { expanded = true },
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = displayText,
+                                    color = Color(0xFF3F51B5),
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.arrow_down_float),
+                                    contentDescription = null,
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier
+                                .background(Color.White)
+                                .fillMaxWidth(0.8f)
+                        ) {
+                            listOf(
+                                stringResource(R.string.english) to "en",
+                                stringResource(R.string.arabic) to "ar"
+                            ).forEach { lang ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = lang.first,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            fontWeight = if (selectedLang == lang.second) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    onClick = {
+                                        viewModel.updateLanguage(lang.second)
+                                        expanded = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -133,11 +203,13 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 ) {
                     Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
                         MapPickerScreen(
+                            viewModel = viewModel,
                             onLocationSelected = { latLng ->
-                                // دي هتروح للـ ViewModel تجيب الداتا وتنادي hideMap()
                                 viewModel.getWeatherByMaps(latLng.latitude, latLng.longitude)
                             },
-                            onDismiss = { viewModel.hideMap() }
+                            onDismiss = {
+                                viewModel.hideMap()
+                            }
                         )
                     }
                 }

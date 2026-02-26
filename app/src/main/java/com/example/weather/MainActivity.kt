@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
         val repository = NetworkRepositoryImp(dataSource)
 
         val viewModel = HomeViewModel(repository)
-        val settingsViewModel = SettingsViewModel(viewModel)
+        val settingsViewModel = SettingsViewModel(viewModel, repository)
 
 
         setContent {

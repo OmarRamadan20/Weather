@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id ("kotlin-parcelize")
+    id ("com.google.devtools.ksp") version "2.1.0-1.0.29"
 }
 
 android {
@@ -57,6 +58,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.ui.text)
+    implementation(libs.ads.mobile.sdk)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -107,6 +109,8 @@ dependencies {
 
 
     implementation("com.google.android.libraries.places:places:3.3.0")
+
+    ksp("androidx.room:room-compiler:$room_version")
 
 
 }

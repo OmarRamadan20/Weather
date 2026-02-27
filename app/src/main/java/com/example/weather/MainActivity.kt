@@ -35,10 +35,15 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.example.weather.data.config.db.AppDatabase
 import com.example.weather.data.config.network.RetrofitClient
+import com.example.weather.data.datasources.local.LocalDataSource
+import com.example.weather.data.datasources.local.LocalDataSourceImp
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.datasources.remote.network.NetworkDataSourceImp
 import com.example.weather.data.repo.NetworkRepositoryImp
+import com.example.weather.presentation.favourite.view.FavouriteWeatherScreen
+import com.example.weather.presentation.favourite.viewmodel.FavViewModel
 import com.example.weather.presentation.home.view.WeatherScreen
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import com.example.weather.presentation.settings.view.SettingsScreen
@@ -50,21 +55,27 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val apiService = RetrofitClient.instance
-        val dataSource = NetworkDataSourceImp(apiService)
-        val repository = NetworkRepositoryImp(dataSource)
+        val database = AppDatabase.getInstance(this)
+        val dao = database.weatherDao()
+        val remoteDataSource = NetworkDataSourceImp(apiService)
+        val localDataSource = LocalDataSourceImp(dao)
+
+        val repository = NetworkRepositoryImp(remoteDataSource,localDataSource)
 
         val viewModel = HomeViewModel(repository)
         val settingsViewModel = SettingsViewModel(viewModel, repository)
+        val favViewModel = FavViewModel( repository)
+
 
 
         setContent {
-            WeatherRoute(viewModel = viewModel, settingsViewModel = settingsViewModel)
+            WeatherRoute(viewModel = viewModel, settingsViewModel = settingsViewModel, favViewModel = favViewModel)
         }
     }
 }
 
 @Composable
-fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel) {
+fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel, favViewModel: FavViewModel) {
     val weatherState by viewModel.weatherState.collectAsState()
     val forecastState by viewModel.hourlyState.collectAsState()
     val dailyState by viewModel.dailyState.collectAsState()
@@ -124,11 +135,7 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel)
                         )
 
                         "settings" -> SettingsScreen(settingsViewModel)
-                        "fav" -> Text(
-                            "Favorites Screen",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-
+                        "fav" ->FavouriteWeatherScreen(favViewModel)
                         "alerts" -> Text(
                             "Alerts Screen",
                             modifier = Modifier.align(Alignment.Center)

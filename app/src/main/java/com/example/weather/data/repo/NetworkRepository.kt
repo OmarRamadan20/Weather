@@ -1,11 +1,14 @@
 package com.example.weather.data.repo
 
+import com.example.weather.data.config.db.FavLocation
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.map.CityResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 interface NetworkRepository {
     suspend fun getCurrentWeather(
@@ -37,4 +40,13 @@ interface NetworkRepository {
         query: String,
         limit: Int = 8,
         apiKey: String): MyResult<List<CityResponseItem>>
+
+
+    fun getFavourites(): Flow<List<FavLocation>>
+
+    suspend fun addLocationToFav(location: FavLocation)
+
+    suspend fun deleteLocationFromFav(location: FavLocation)
+
+
 }

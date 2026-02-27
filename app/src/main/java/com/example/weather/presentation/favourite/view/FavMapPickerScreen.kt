@@ -1,9 +1,6 @@
-package com.example.weather.presentation.settings.view
+package com.example.weather.presentation.favourite.view
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,41 +17,56 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.weather.data.datasources.remote.network.MyResult
-import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
-import com.google.accompanist.permissions.*
+import com.example.weather.presentation.favourite.viewmodel.FavViewModel
+import com.example.weather.presentation.settings.view.findActivity
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
 
-fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MapPickerScreen(
-    viewModel: SettingsViewModel,
+fun FavMapPickerScreen(
+    viewModel: FavViewModel,
     onLocationSelected: (LatLng) -> Unit,
     onDismiss: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
-    ) {
-        MapLayout(
-            viewModel = viewModel,
-            isPermissionGranted = false,
-            onLocationSelected = onLocationSelected,
-            onDismiss = onDismiss
-        )
+    val context = LocalContext.current
+
+    val activity = remember(context) { context.findActivity() }
+
+    if (activity != null) {
+        CompositionLocalProvider(LocalContext provides activity) {
+            val locationPermissionState = rememberPermissionState(
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+
+            LaunchedEffect(Unit) {
+                locationPermissionState.launchPermissionRequest()
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Color.White
+            ) {
+                FavMapLayout(
+                    viewModel = viewModel,
+                    isPermissionGranted = locationPermissionState.status.isGranted,
+                    onLocationSelected = onLocationSelected,
+                    onDismiss = onDismiss
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun MapLayout(
-    viewModel: SettingsViewModel,
+fun FavMapLayout(
+    viewModel: FavViewModel,
     isPermissionGranted: Boolean,
     onLocationSelected: (LatLng) -> Unit,
     onDismiss: () -> Unit
@@ -70,8 +82,8 @@ fun MapLayout(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(isMyLocationEnabled = false),
-            uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
+            properties = MapProperties(isMyLocationEnabled = isPermissionGranted),
+            uiSettings = MapUiSettings(myLocationButtonEnabled = isPermissionGranted, zoomControlsEnabled = false)
         )
 
         Column(
@@ -150,7 +162,7 @@ fun MapLayout(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp, start = 20.dp, end = 20.dp)
+                .padding(bottom = 50.dp, start = 20.dp, end = 20.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {

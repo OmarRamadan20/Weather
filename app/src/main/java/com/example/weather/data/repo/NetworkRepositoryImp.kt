@@ -1,14 +1,18 @@
 package com.example.weather.data.repo
 
+import com.example.weather.data.config.db.FavLocation
+import com.example.weather.data.datasources.local.LocalDataSource
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.datasources.remote.network.NetworkDataSource
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
-import com.example.weather.data.models.map.CityResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRepository {
+class NetworkRepositoryImp(private val remoteDataSource: NetworkDataSource,
+                           private val localDataSource: LocalDataSource): NetworkRepository {
     override suspend fun getCurrentWeather(
         lat: Double,
         lon: Double,
@@ -16,7 +20,7 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
         units: String,
         lang: String
     ): MyResult<WeatherResponse> {
-        return dataSource.getCurrentWeather(lat, lon, apiKey, units, lang)
+        return remoteDataSource.getCurrentWeather(lat, lon, apiKey, units, lang)
     }
 
     override suspend fun getHourlyForecast(
@@ -25,7 +29,7 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
         apiKey: String,
         units: String
     ): MyResult<HourlyResponse> {
-        return dataSource.getHourlyForecast(lat=lat,lon=lon,apiKey=apiKey,units=units)
+        return remoteDataSource.getHourlyForecast(lat=lat,lon=lon,apiKey=apiKey,units=units)
     }
 
     override suspend fun dailyForecast(
@@ -35,7 +39,7 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
         lang: String,
         units: String
         ): MyResult<DailyResponse> {
-        return dataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey, lang = lang, units = units)
+        return remoteDataSource.dailyForecast(lat = lat, lon = lon, apiKey = apiKey, lang = lang, units = units)
     }
 
 
@@ -43,7 +47,20 @@ class NetworkRepositoryImp(private val dataSource: NetworkDataSource): NetworkRe
         query: String,
         limit: Int,
         apiKey: String): MyResult<List<CityResponseItem>> {
-        return dataSource.getCitySuggestions(query = query, limit = limit, apiKey = apiKey)
+        return remoteDataSource.getCitySuggestions(query = query, limit = limit, apiKey = apiKey)
     }
+
+    override fun getFavourites(): Flow<List<FavLocation>> {
+        return localDataSource.getStoredLocations()
+    }
+
+    override suspend fun addLocationToFav(location: FavLocation) {
+        return localDataSource.saveToFav(location)
+    }
+
+    override suspend fun deleteLocationFromFav(location: FavLocation) {
+        return localDataSource.deleteFav(location)
+    }
+
 
 }

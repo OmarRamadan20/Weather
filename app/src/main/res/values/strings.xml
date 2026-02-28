@@ -24,11 +24,26 @@
 
 
     <string name="wind_speed">Wind Speed</string>
-    <string name="humidity">Humidity</string>
-    <string name="sunrise">Sunrise</string>
-    <string name="sunset">Sunset</string>
     <string name="metric_label">Metric</string>
     <string name="imperial_label">Imperial</string>
     <string name="standard_label">Standard</string>
+
+
+
+    <string name="current_temp">Current Temperature: %1$s°C</string>
+    <string name="humidity">Humidity</string>
+    <string name="wind_unit">%1$s km/h</string>
+    <string name="description">Description: %1$s</string>
+    <string name="sunrise">🌅 Sunrise: %1$s</string>
+    <string name="sunset">🌇 Sunset: %1$s</string>
+    <string name="add_to_favourites">Add to Favourites ❤️</string>
+
+
+    <string name="search_city_placeholder">Search City...</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+
+    <string name="sunrise2">Sunrise: %1$s</string>
+    <string name="sunset2">Sunset: %1$s</string>
 
 </resources>

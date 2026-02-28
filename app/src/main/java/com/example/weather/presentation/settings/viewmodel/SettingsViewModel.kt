@@ -29,7 +29,7 @@ class SettingsViewModel(
     private val _language = MutableStateFlow("English")
     val language: StateFlow<String> = _language
 
-    private val _isGpsEnabled = MutableStateFlow(true)
+    private val _isGpsEnabled = MutableStateFlow(false)
     val isGpsEnabled: StateFlow<Boolean> = _isGpsEnabled
 
 
@@ -66,7 +66,6 @@ class SettingsViewModel(
             else -> "ar"
         }
 
-
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(langCode)
         AppCompatDelegate.setApplicationLocales(appLocale)
 
@@ -75,10 +74,14 @@ class SettingsViewModel(
         homeViewModel.fetchWeatherWithNewSettings(lang = langCode, units = _tempUnit.value)
     }
 
+    fun updateLocationFromGPS(lat: Double, lon: Double) {
+        homeViewModel.fetchWeatherForLocation(lat, lon)
+    }
+
     fun toggleGps(enabled: Boolean) {
         _isGpsEnabled.value = enabled
-        //Open GPS
     }
+
 
     fun updateWindUnit(unit: String) {
         _windUnit.value = unit

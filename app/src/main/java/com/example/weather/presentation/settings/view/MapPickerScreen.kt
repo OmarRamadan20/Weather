@@ -14,10 +14,12 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.example.weather.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
@@ -39,13 +41,9 @@ fun MapPickerScreen(
     onLocationSelected: (LatLng) -> Unit,
     onDismiss: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         MapLayout(
             viewModel = viewModel,
-            isPermissionGranted = false,
             onLocationSelected = onLocationSelected,
             onDismiss = onDismiss
         )
@@ -55,7 +53,6 @@ fun MapPickerScreen(
 @Composable
 fun MapLayout(
     viewModel: SettingsViewModel,
-    isPermissionGranted: Boolean,
     onLocationSelected: (LatLng) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -71,9 +68,10 @@ fun MapLayout(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(isMyLocationEnabled = false),
-            uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
+            uiSettings = MapUiSettings(zoomControlsEnabled = true)
         )
 
+        // Search Bar and Results
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -87,7 +85,7 @@ fun MapLayout(
                         searchQuery = it
                         viewModel.searchCities(it)
                     },
-                    placeholder = { Text("Search City...") },
+                    placeholder = { Text(stringResource(R.string.search_city_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     singleLine = true,
@@ -100,43 +98,32 @@ fun MapLayout(
                 )
             }
 
-            when (val result = suggestionsResult) {
-                is MyResult.Success -> {
-                    val cities = result.data
-                    if (cities.isNotEmpty() && searchQuery.length >= 3) {
+            if (searchQuery.length >= 3) {
+                when (val result = suggestionsResult) {
+                    is MyResult.Success -> {
                         Card(
                             modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = Color.White)
                         ) {
                             LazyColumn(modifier = Modifier.heightIn(max = 250.dp)) {
-                                items(cities) { city ->
-                                    Text(
-                                        text = "${city.name}, ${city.country}",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                val lat = city.lat ?: 0.0
-                                                val lon = city.lon ?: 0.0
-                                                scope.launch {
-                                                    cameraPositionState.animate(
-                                                        CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), 12f)
-                                                    )
-                                                }
-                                                searchQuery = city.name ?: ""
-                                                viewModel.onCitySelected(city)
-                                            }
-                                            .padding(16.dp)
+                                items(result.data) { city ->
+                                    ListItem(
+                                        headlineContent = { Text("${city.name}, ${city.country}") },
+                                        modifier = Modifier.clickable {
+                                            val latLng = LatLng(city.lat ?: 0.0, city.lon ?: 0.0)
+                                            scope.launch { cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(latLng, 12f)) }
+                                            searchQuery = city.name ?: ""
+                                            viewModel.onCitySelected(city)
+                                        }
                                     )
                                     HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
                                 }
                             }
                         }
                     }
+                    is MyResult.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                    else -> {}
                 }
-                is MyResult.Loading -> {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
-                }
-                else -> {}
             }
         }
 
@@ -150,26 +137,25 @@ fun MapLayout(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp, start = 20.dp, end = 20.dp)
+                .padding(bottom = 40.dp, start = 20.dp, end = 20.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
-                onClick = { onDismiss() },
+                onClick = onDismiss,
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
                 shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Cancel")
-            }
+            ) { Text(stringResource(R.string.cancel)) }
+
             Button(
                 onClick = { onLocationSelected(cameraPositionState.position.target) },
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5)),
                 shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Confirm")
-            }
+            ) { Text(stringResource(R.string.confirm)
+            ) }
         }
     }
 }
+

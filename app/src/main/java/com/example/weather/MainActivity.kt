@@ -101,18 +101,16 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
         )
     }
 
-    val context = LocalContext.current
     val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
         Locale("ar") else Locale("en")
 
-    val configuration = Configuration(context.resources.configuration)
-    configuration.setLocale(currentLocale)
-
-    val localizedContext = context.createConfigurationContext(configuration)
-
-    CompositionLocalProvider(LocalContext provides localizedContext,
-        LocalLayoutDirection provides if (currentLocale.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr) {
-
+    CompositionLocalProvider(
+        LocalLayoutDirection provides
+                if (currentLocale.language == "ar")
+                    LayoutDirection.Rtl
+                else
+                    LayoutDirection.Ltr
+    ) {
 
         Box(modifier = Modifier.fillMaxSize()) {
 
@@ -135,7 +133,7 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
                         )
 
                         "settings" -> SettingsScreen(settingsViewModel)
-                        "fav" ->FavouriteWeatherScreen(favViewModel)
+                        "fav" ->FavouriteWeatherScreen(favViewModel,settingsViewModel)
                         "alerts" -> Text(
                             "Alerts Screen",
                             modifier = Modifier.align(Alignment.Center)

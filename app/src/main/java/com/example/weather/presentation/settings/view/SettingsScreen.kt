@@ -1,6 +1,11 @@
 package com.example.weather.presentation.settings.view
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,22 +33,58 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.example.weather.R
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.location.LocationServices
 import java.util.Locale
 
+
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
+
+
+    val context = LocalContext.current
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
+
+    val locationPermissionState = rememberPermissionState(
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    var locationRequested by remember { mutableStateOf(false) }
+
 
     val tempUnit by viewModel.tempUnit.collectAsState()
     val windUnit by viewModel.windUnit.collectAsState()
     val selectedLang by viewModel.language.collectAsState()
-    val useGPS by viewModel.isGpsEnabled.collectAsState()
     val isMapVisible by viewModel.isMapVisible.collectAsState()
+    val useGPS by viewModel.isGpsEnabled.collectAsState()
 
-    val context = LocalContext.current
     val currentLocale = if (selectedLang.contains("ar", ignoreCase = true)) Locale("ar") else Locale("en")
     val configuration = Configuration(context.resources.configuration)
     configuration.setLocale(currentLocale)
     val localizedContext = context.createConfigurationContext(configuration)
+
+
+    LaunchedEffect(locationPermissionState.status.isGranted) {
+        if (locationPermissionState.status.isGranted && locationRequested && !useGPS) {
+            fusedLocationClient.getCurrentLocation(
+                com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+                null
+            ).addOnSuccessListener { location ->
+                location?.let {
+                    viewModel.updateLocationFromGPS(it.latitude, it.longitude)
+                    viewModel.toggleGps(true)
+                }
+            }
+        }
+    }
+
+
 
     CompositionLocalProvider(
         LocalContext provides localizedContext,
@@ -81,15 +122,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     ) {
                         unitOptions.forEach { option ->
                             val isSelected = tempUnit == option.first
-
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(if (isSelected) Color.White else Color.Transparent)
-                                    .clickable {
-                                        viewModel.updateUnits(option.first)
-                                    }
+                                    .clickable { viewModel.updateUnits(option.first) }
                                     .padding(vertical = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -111,29 +149,62 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     }
                 }
 
+                // كارت مصدر الموقع
                 SettingsCard(title = stringResource(R.string.location_source)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF3F51B5))
+                        Icon(Icons.Default.LocationOn, null, tint = Color(0xFF3F51B5))
                         Spacer(Modifier.width(10.dp))
-                        Text(stringResource(R.string.use_gps_for_location), modifier = Modifier.weight(1f))
-                        Switch(checked = useGPS, onCheckedChange = { viewModel.toggleGps(it) })
+                        Text(stringResource(R.string.use_gps_for_location), Modifier.weight(1f))
+
+                        Switch(
+                            checked = useGPS,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    if (!locationRequested) {
+                                        locationRequested = true
+
+                                        if (!locationPermissionState.status.isGranted) {
+                                            locationPermissionState.launchPermissionRequest()
+                                        } else {
+                                            fusedLocationClient.getCurrentLocation(
+                                                com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+                                                null
+                                            ).addOnSuccessListener { location ->
+                                                location?.let {
+                                                    viewModel.updateLocationFromGPS(it.latitude, it.longitude)
+                                                    Log.d("MYLOCATIOOON", "Lat: ${it.latitude}, Lon: ${it.longitude}")
+                                                }
+                                            }
+                                            viewModel.toggleGps(true)
+                                        }
+                                    }
+                                } else {
+                                    // لما نغلق الـ switch
+                                    viewModel.toggleGps(false)
+                                    locationRequested = false
+                                }
+                            }
+                        )
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.or_select_manually_on_map),
                         color = Color(0xFF3F51B5),
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { viewModel.showMap() }.padding(vertical = 4.dp)
+                        modifier = Modifier
+                            .clickable { viewModel.showMap()
+
+                            }
+                            .padding(vertical = 4.dp)
+
+
                     )
                 }
 
                 SettingsCard(title = stringResource(R.string.language)) {
                     var expanded by remember { mutableStateOf(false) }
-
                     val displayText = if (selectedLang.contains("ar", ignoreCase = true))
-                        stringResource(R.string.arabic)
-                    else
-                        stringResource(R.string.english)
+                        stringResource(R.string.arabic) else stringResource(R.string.english)
 
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedCard(
@@ -143,17 +214,11 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .fillMaxWidth(),
+                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = displayText,
-                                    color = Color(0xFF3F51B5),
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text(displayText, color = Color(0xFF3F51B5), fontWeight = FontWeight.Bold)
                                 Icon(
                                     painter = painterResource(id = android.R.drawable.arrow_down_float),
                                     contentDescription = null,
@@ -166,22 +231,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         DropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
-                            modifier = Modifier
-                                .background(Color.White)
-                                .fillMaxWidth(0.8f)
+                            modifier = Modifier.background(Color.White).fillMaxWidth(0.8f)
                         ) {
                             listOf(
                                 stringResource(R.string.english) to "en",
                                 stringResource(R.string.arabic) to "ar"
                             ).forEach { lang ->
                                 DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = lang.first,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            fontWeight = if (selectedLang == lang.second) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    },
+                                    text = { Text(lang.first, fontWeight = if (selectedLang == lang.second) FontWeight.Bold else FontWeight.Normal) },
                                     onClick = {
                                         viewModel.updateLanguage(lang.second)
                                         expanded = false
@@ -195,21 +252,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             }
 
             if (isMapVisible) {
-                Popup(
-                    properties = PopupProperties(
-                        focusable = true,
-                        excludeFromSystemGesture = true
-                    )
-                ) {
+                Popup(properties = PopupProperties(focusable = true, excludeFromSystemGesture = true)) {
                     Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
                         MapPickerScreen(
                             viewModel = viewModel,
                             onLocationSelected = { latLng ->
                                 viewModel.getWeatherByMaps(latLng.latitude, latLng.longitude)
+                                viewModel.toggleGps(false)
+
                             },
-                            onDismiss = {
-                                viewModel.hideMap()
-                            }
+                            onDismiss = { viewModel.hideMap() }
                         )
                     }
                 }

@@ -25,10 +25,22 @@
     <string name="wind_speed">سرعه الرياح</string>
     <string name="humidity">الرطوبه</string>
 
-    <string name="sunrise">الشروق</string>
-    <string name="sunset">الغروب</string>
     <string name="metric_label">مترية</string>
     <string name="imperial_label">إمبراطورية</string>
     <string name="standard_label">قياسية</string>
+
+
+
+    <string name="current_temp">درجة الحرارة الحالية: %1$s°م</string>
+    <string name="wind_unit">%1$s كم/س</string>
+    <string name="description">الوصف: %1$s</string>
+    <string name="sunrise"> الشروق: %1$s</string>
+    <string name="sunset"> الغروب: %1$s</string>
+    <string name="add_to_favourites">إضافة إلى المفضلة ❤️</string>
+
+
+    <string name="search_city_placeholder">ابحث عن مدينة...</string>
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
 
 </resources>

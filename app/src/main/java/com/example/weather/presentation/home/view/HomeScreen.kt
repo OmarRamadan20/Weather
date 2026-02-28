@@ -105,7 +105,7 @@ fun WeatherScreen(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                SunPhaseSection(weatherData)
+                SunPhaseSection(weatherData,currentLocale)
 
                 Spacer(modifier = Modifier.height(30.dp))
 
@@ -536,7 +536,7 @@ fun DetailBox(
 }
 
 @Composable
-fun SunPhaseSection(weather: WeatherResponse) {
+fun SunPhaseSection(weather: WeatherResponse , locale: Locale) {
 
     Surface(
         modifier = Modifier
@@ -550,12 +550,12 @@ fun SunPhaseSection(weather: WeatherResponse) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 10.dp),
+
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SunInfoItem(
-                title = "Sunrise",
-                time = formatTime(weather.sys?.sunrise),
+                title = stringResource(R.string.sunrise2, formatTime(weather.sys?.sunrise, locale)),
                 icon = R.drawable.ic_sunrise,
                 accentColor = Color(0xFFFFB74D)
             )
@@ -573,8 +573,7 @@ fun SunPhaseSection(weather: WeatherResponse) {
             )
 
             SunInfoItem(
-                title = "Sunset",
-                time = formatTime(weather.sys?.sunset),
+                title = stringResource(R.string.sunset2, formatTime(weather.sys?.sunset, locale)),
                 icon = R.drawable.ic_sunset,
                 accentColor = Color(0xFFFF7043)
             )
@@ -583,7 +582,7 @@ fun SunPhaseSection(weather: WeatherResponse) {
 }
 
 @Composable
-fun SunInfoItem(title: String, time: String, icon: Int, accentColor: Color) {
+fun SunInfoItem(title: String, icon: Int, accentColor: Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(8.dp)
@@ -609,27 +608,27 @@ fun SunInfoItem(title: String, time: String, icon: Int, accentColor: Color) {
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
-            Text(
-                text = time,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF2D3142)
-            )
+
         }
     }
 }
 
-fun formatDate(t: Int?): String = t?.let { SimpleDateFormat("EEEE, d MMMM", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
 fun formatToHour(t: Int?, locale: Locale = Locale.getDefault()): String {
     return t?.let {
         val sdf = SimpleDateFormat("ha", locale)
         sdf.format(Date(it.toLong() * 1000))
     } ?: ""
 }
-fun formatTime(t: Int?): String = t?.let { SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(it.toLong() * 1000)) } ?: ""
 
+fun formatTime(t: Int?, locale: Locale): String {
+    return t?.let {
+        // نستخدم الـ locale اللي جاي من الإعدادات (ar أو en)
+        SimpleDateFormat("hh:mm a", locale).format(Date(it.toLong() * 1000))
+    } ?: ""
+}
 
 
 

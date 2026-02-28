@@ -1,18 +1,16 @@
 package com.example.weather.presentation.favourite.view
+import android.content.res.Configuration
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,7 +18,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -31,135 +28,146 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.weather.data.config.db.FavLocation
-import com.example.weather.data.config.db.WeatherState
 import com.example.weather.presentation.favourite.viewmodel.FavViewModel
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import kotlinx.coroutines.launch
+import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavouriteWeatherScreen(viewModel: FavViewModel) {
+fun FavouriteWeatherScreen(viewModel: FavViewModel, settingsViewModel: SettingsViewModel) {
+
     val favs by viewModel.favLocations.collectAsStateWithLifecycle()
     var showMapPicker by remember { mutableStateOf(false) }
 
-    val selectedWeather by viewModel.selectedWeather.collectAsStateWithLifecycle()
+    val currentUnits by settingsViewModel.tempUnit.collectAsStateWithLifecycle()
+
+
+
+    val currentLang by settingsViewModel.language.collectAsStateWithLifecycle()
+
     var showBottomSheet by remember { mutableStateOf(false) }
+    val selectedWeather by viewModel.selectedWeather.collectAsStateWithLifecycle()
 
 
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    Log.d("FAB", "Clicked!")
-                    showMapPicker = true },
-                containerColor = Color(0xFF3F51B5),
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Location")
-            }
-        }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Text(
-                "My Favourite Locations",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp)
-            )
+    val context = LocalContext.current
 
-            if (favs.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No favourites added yet", color = Color.Gray)
+    val currentLocale = if (currentLang.contains("ar", ignoreCase = true)) Locale("ar") else Locale("en")
+    val configuration = Configuration(context.resources.configuration)
+    configuration.setLocale(currentLocale)
+    val localizedContext = context.createConfigurationContext(configuration)
+
+    CompositionLocalProvider(
+        LocalContext provides localizedContext,
+        LocalLayoutDirection provides if (currentLocale.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr
+    ) {
+        Log.e("FavScreen", "Lang: $currentLang")
+        Scaffold(
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { showMapPicker = true },
+                    containerColor = Color(0xFF3F51B5),
+                    contentColor = Color.White
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Location")
                 }
-            } else {
-                LazyColumn {
-                    items(favs, key = { it.id }) { location ->
-                        FavItemRow(location) {
-                            viewModel.deleteFromFav(location)
+            }
+        ) { padding ->
+            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+                Text(
+                    text = if (currentLang == "ar") "مواقعي المفضلة" else "My Favourite Locations",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
+
+                if (favs.isEmpty()) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = if (currentLang == "ar") "لا يوجد مفضلات بعد" else "No favourites added yet",
+                            color = Color.Gray
+                        )
+                    }
+                } else {
+                    LazyColumn {
+                        items(favs, key = { it.id }) { location ->
+                            FavItemRow(location, currentLang) {
+                                viewModel.deleteFromFav(location)
+                            }
                         }
                     }
                 }
             }
         }
+        val context = LocalContext.current
+        if (showBottomSheet && selectedWeather != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showBottomSheet = false },
+                containerColor = Color.White
+            ) {
+                WeatherDetailSheet(
+                    settingsViewModel =settingsViewModel,
+                    weather = selectedWeather!!,
+                    onSaveClick = { weather ->
+                        viewModel.saveToFavourites(weather)
+                        showBottomSheet = false
 
-        // إظهار الـ Map Picker كـ Overlay فوق الشاشة
-    }
-    if (showMapPicker) {
-        Dialog(
-            onDismissRequest = { showMapPicker = false },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false // عشان يملأ الشاشة كلها كأنه شاشة جديدة
-            )
-        ) {
-            // نغلف الـ Picker بـ Surface عشان نضمن الخلفية والـ Size
-            Surface(modifier = Modifier.fillMaxSize()) {
-                FavMapPickerScreen(
-                    viewModel = viewModel,
-                    onLocationSelected = { latLng ->
-                        viewModel.fetchWeatherForMapPoint(
-                            latLng.latitude,
-                            latLng.longitude,
-                            apiKey = "a50b3547c713e7be1ec57c696006497f",
-                            units = "metric",
-                            lang = "en"
-                        )
-                        showBottomSheet = true
+                        val message = if (currentLang == "ar")
+                            "تم إضافة ${weather.cityName} للمفضلة!"
+                        else "${weather.cityName} added to favourites!"
 
-                    },
-                    onDismiss = { showMapPicker = false }
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    }
                 )
             }
         }
-    }
-    val context = LocalContext.current
-    if (showBottomSheet && selectedWeather != null) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showBottomSheet = false
-            },
-            containerColor = Color.White
-        ) {
 
-            WeatherDetailSheet(
-                weather = selectedWeather!!,
-                onSaveClick = { weather ->
-                    viewModel.saveToFavourites(weather)
-                    showBottomSheet = false
-                    Toast.makeText(context,
-                        "${weather.cityName} added to favourites!",
-                        Toast.LENGTH_SHORT
-                    ).show()
+        if (showMapPicker) {
+            Dialog(
+                onDismissRequest = { showMapPicker = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    FavMapPickerScreen(
+                        favViewModel = viewModel,
+                        settingsViewModel = settingsViewModel,
+                        onLocationSelected = { latLng ->
+                            viewModel.fetchWeatherForMapPoint(
+                                lat = latLng.latitude,
+                                lon = latLng.longitude,
+                                apiKey = "a50b3547c713e7be1ec57c696006497f",
+                                units = currentUnits,
+                                lang = currentLang
+                            )
+                            showBottomSheet = true
+                        },
+                        onDismiss = { showMapPicker = false }
+                    )
                 }
-
-
-            )
+            }
         }
-    }
 
+
+    }
 }
 
 
@@ -168,6 +176,7 @@ fun FavouriteWeatherScreen(viewModel: FavViewModel) {
 @Composable
 fun FavItemRow(
     location: FavLocation,
+    currentLang: String,
     onDelete: (FavLocation) -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
@@ -221,15 +230,19 @@ fun FavItemRow(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
+                    val latText = if (currentLang == "ar") "خط عرض" else "Lat"
+                    val lonText = if (currentLang == "ar") "خط طول" else "Lon"
+
                     Text(
-                        text = "Lat: ${String.format("%.2f", location.lat)}, Lon: ${String.format("%.2f", location.lon)}",
+                        text = "$latText: ${String.format("%.2f", location.lat)}, $lonText: ${String.format("%.2f", location.lon)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
                 }
 
+                val unit = if (currentLang == "ar") "°م" else "°C"
                 Text(
-                    text = "${location.temp}°C",
+                    text = "${location.temp}$unit",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color(0xFF3F51B5),
                     fontWeight = FontWeight.ExtraBold

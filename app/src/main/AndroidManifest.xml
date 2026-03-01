@@ -18,11 +18,14 @@ xmlns:tools="http://schemas.android.com/tools">
     android:fullBackupContent="@xml/backup_rules"
     android:name=".WeatherApplication"
     android:icon="@mipmap/ic_launcher"
+
     android:label="@string/app_name"
     android:usesCleartextTraffic="true"
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
     android:theme="@style/Theme.Weather">
+    <uses-library android:name="com.google.android.maps" android:required="false" />
+
     <activity
         android:name=".MainActivity"
         android:exported="true"
@@ -49,7 +52,7 @@ xmlns:tools="http://schemas.android.com/tools">
 
     <meta-data
         android:name="com.google.android.geo.API_KEY"
-        android:value="a50b3547c713e7be1ec57c696006497f" />
+        android:value="AIzaSyCqeECrVFRR9jRjvDbCndIisz_lya7Mar8" />
     <provider
         android:name="androidx.startup.InitializationProvider"
         android:authorities="${applicationId}.androidx-startup"

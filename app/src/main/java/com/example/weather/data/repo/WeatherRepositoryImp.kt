@@ -8,11 +8,11 @@ import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weatherapp.data.models.Alerts
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
-class NetworkRepositoryImp(private val remoteDataSource: NetworkDataSource,
-                           private val localDataSource: LocalDataSource): NetworkRepository {
+class WeatherRepositoryImp(private val remoteDataSource: NetworkDataSource,
+                           private val localDataSource: LocalDataSource): WeatherRepository {
     override suspend fun getCurrentWeather(
         lat: Double,
         lon: Double,
@@ -62,5 +62,41 @@ class NetworkRepositoryImp(private val remoteDataSource: NetworkDataSource,
         return localDataSource.deleteFav(location)
     }
 
+    override fun getAllAlerts(): Flow<List<Alerts>> {
+        return localDataSource.getAllALerts()
+    }
 
+    override suspend fun addAlert(alert: Alerts): Long {
+        return localDataSource.addAlert(alert)
+    }
+
+    override suspend fun deleteAlert(alert: Alerts) {
+        return localDataSource.deleteAlert(alert)
+    }
+
+    override suspend fun getAlertById(id: Int): Alerts? {
+        return localDataSource.getAlertById(id)
+    }
+
+    override suspend fun updateAlertStatus(alertId: Int, isEnabled: Boolean) {
+        return localDataSource.updateAlertStatus(alertId, isEnabled)
+    }
+
+
+
+    companion object {
+        @Volatile
+        private var INSTANCE: WeatherRepositoryImp? = null
+
+        fun getInstance(
+            remoteDataSource: NetworkDataSource,
+            localDataSource: LocalDataSource
+        ): WeatherRepositoryImp {
+            return INSTANCE ?: synchronized(this) {
+                val instance = WeatherRepositoryImp(remoteDataSource, localDataSource)
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 }

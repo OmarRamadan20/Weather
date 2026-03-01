@@ -43,4 +43,53 @@
     <string name="cancel">إلغاء</string>
     <string name="confirm">تأكيد</string>
 
+
+    <string name="alert_title">تنبيه حالة الطقس ⚠️</string>
+    <string name="rain">هطول أمطار غزيرة 🌧️</string>
+    <string name="wind">نشاط قوي للرياح 💨</string>
+    <string name="temp">تغير مفاجئ في الحرارة 🌡️</string>
+    <string name="storm">تحذير من عواصف رعدية ⛈️</string>
+
+    <string name="alert_msg_format">انتبه! تم رصد %1$s في منطقتك الآن.</string>
+    <string name="check_app">افتح التطبيق لمزيد من التفاصيل</string>
+
+
+    <string name="threshold_reached">تم تجاوز الحد المطلوب: %1$s</string>
+    <string name="temp_threshold_msg">الحرارة وصلت لـ %1$.1f°، وهي أعلى من حدك (%2$.1f°)</string>
+    <string name="wind_threshold_msg">سرعة الرياح %1$.1f كم/س، تجاوزت حدك (%2$.1f كم/س)</string>
+
+
+    <string name="threshold_level">مستوى الحد</string>
+    <string name="alert_trigger">تنبيه عند تجاوز:</string>
+
+
+    <string name="delete">حذف</string>
+    <string name="next">التالي</string>
+
+    <string name="configure_new_alert">إعداد تنبيه جديد</string>
+    <string name="triggers_on_storm">تفعيل عند حدوث عواصف ⛈️</string>
+    <string name="active_duration">فترة التفعيل</string>
+
+    <string name="start">من (البداية)</string>
+    <string name="end">إلى (النهاية)</string>
+
+    <string name="save_alert">حفظ التنبيه ✅</string>
+    <string name="ok">موافق</string>
+
+    <string name="notifications">الإشعارات</string>
+    <string name="alarm_sound">صوت التنبيه</string>
+
+    <string name="tap_to_create_alert">اضغط لإضافة تنبيه جديد ➕</string>
+    <string name="no_alerts_set">لا توجد تنبيهات محددة حالياً</string>
+
+    <string name="weather_alerts">تنبيهات الطقس</string>
+    <string name="add_alert">إضافة تنبيه جديد</string>
+
+    <string name="active_alerts">التنبيهات المفعلة</string>
+    <string name="inactive_alerts">التنبيهات غير المفعلة</string>
+
+    <string name="threshold_value">قيمة الحد</string>
+
+
+
 </resources>

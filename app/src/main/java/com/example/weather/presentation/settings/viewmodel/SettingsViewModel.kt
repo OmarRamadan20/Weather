@@ -6,18 +6,20 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weather.data.datasources.remote.network.MyResult
-import com.example.weather.data.models.map.CityResponse
 import com.example.weather.data.models.map.CityResponseItem
-import com.example.weather.data.repo.NetworkRepository
+import com.example.weather.data.repo.WeatherRepository
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val homeViewModel: HomeViewModel,
-    private val repository: NetworkRepository
+    private val repository: WeatherRepository,
+    val settingsPreferences: SettingsPreferences
 ) : ViewModel() {
 
     private val _tempUnit = MutableStateFlow("metric")
@@ -39,8 +41,9 @@ class SettingsViewModel(
     private val _citySuggestions = MutableStateFlow<MyResult<List<CityResponseItem>>>(MyResult.Success(emptyList()))
     val citySuggestions = _citySuggestions.asStateFlow()
 
-
-
+    val tU = settingsPreferences.temperatureUnit.stateIn(
+        viewModelScope, SharingStarted.Eagerly, "metric"
+    )
 
 
 
@@ -55,6 +58,10 @@ class SettingsViewModel(
     fun updateUnits(apiUnit: String) {
         _tempUnit.value = apiUnit
         homeViewModel.fetchWeatherWithNewSettings(units = apiUnit, lang = language.value)
+        viewModelScope.launch {
+            settingsPreferences.saveTempUnit(apiUnit)
+        }
+
     }
 
     fun updateLanguage(langName: String) {
@@ -75,6 +82,7 @@ class SettingsViewModel(
     }
 
     fun updateLocationFromGPS(lat: Double, lon: Double) {
+        Log.e("SettingsViewModel", "updateLocationFromGPS: $lat, $lon")
         homeViewModel.fetchWeatherForLocation(lat, lon)
     }
 

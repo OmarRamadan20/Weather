@@ -1,17 +1,18 @@
 package com.example.weather.presentation.home.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.weather.WeatherResponse
-import com.example.weather.data.repo.NetworkRepository
+import com.example.weather.data.repo.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
+class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
 
     companion object {
         private var savedUnit: String = "metric"
@@ -50,6 +51,7 @@ class HomeViewModel(private val repository: NetworkRepository) : ViewModel() {
                 _weatherState.value = weatherResult
 
                 _hourlyState.value = hourlyResponse
+                Log.e("HomeViewModel", "$lat $lon")
 
             } catch (e: Exception) {
                 val errorMessage = e.message ?: "Unknown Network Error"

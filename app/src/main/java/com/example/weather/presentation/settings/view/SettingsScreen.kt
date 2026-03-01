@@ -149,7 +149,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     }
                 }
 
-                // كارت مصدر الموقع
                 SettingsCard(title = stringResource(R.string.location_source)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.LocationOn, null, tint = Color(0xFF3F51B5))
@@ -179,7 +178,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                                         }
                                     }
                                 } else {
-                                    // لما نغلق الـ switch
                                     viewModel.toggleGps(false)
                                     locationRequested = false
                                 }

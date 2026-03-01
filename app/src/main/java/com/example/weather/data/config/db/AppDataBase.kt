@@ -4,10 +4,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.weatherapp.data.config.db.AlertsDao
+import com.example.weatherapp.data.models.Alerts
 
-@Database(entities = [FavLocation::class], version = 1)
+@Database(entities = [FavLocation::class, Alerts::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun weatherDao(): WeatherDao
+    abstract fun alertsDao(): AlertsDao
+
 
     companion object {
         @Volatile
@@ -19,7 +23,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "weather_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

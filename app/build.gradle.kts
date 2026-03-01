@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.ads.mobile.sdk)
+    implementation(libs.firebase.components)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -113,4 +114,14 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version")
 
 
+    val work_version = "2.9.0"
+    implementation("androidx.work:work-runtime-ktx:$work_version")
+
+
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Coroutines (ضرورية للعمل مع DataStore و Room)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
+
+

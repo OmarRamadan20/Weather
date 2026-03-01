@@ -1,6 +1,5 @@
 package com.example.weather
 
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,24 +29,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.weather.data.config.db.AppDatabase
 import com.example.weather.data.config.network.RetrofitClient
-import com.example.weather.data.datasources.local.LocalDataSource
 import com.example.weather.data.datasources.local.LocalDataSourceImp
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.datasources.remote.network.NetworkDataSourceImp
-import com.example.weather.data.repo.NetworkRepositoryImp
+import com.example.weather.data.repo.WeatherRepositoryImp
+import com.example.weather.presentation.alerts.view.AlertsScreen
 import com.example.weather.presentation.favourite.view.FavouriteWeatherScreen
 import com.example.weather.presentation.favourite.viewmodel.FavViewModel
 import com.example.weather.presentation.home.view.WeatherScreen
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import com.example.weather.presentation.settings.view.SettingsScreen
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import com.example.weather.presentation.alerts.service.AlarmSchedulerImp
+import com.example.weather.presentation.alerts.viewmodel.AlertsViewModel
+import com.example.weather.presentation.settings.viewmodel.SettingsPreferences
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -56,26 +57,41 @@ class MainActivity : ComponentActivity() {
 
         val apiService = RetrofitClient.instance
         val database = AppDatabase.getInstance(this)
-        val dao = database.weatherDao()
-        val remoteDataSource = NetworkDataSourceImp(apiService)
-        val localDataSource = LocalDataSourceImp(dao)
+        val weatherDao = database.weatherDao()
+        val alertsDao = database.alertsDao()
 
-        val repository = NetworkRepositoryImp(remoteDataSource,localDataSource)
+
+        val remoteDataSource = NetworkDataSourceImp(apiService)
+        val localDataSource = LocalDataSourceImp(weatherDao,alertsDao)
+
+        val repository = WeatherRepositoryImp(remoteDataSource,localDataSource)
+
+        val alarmScheduler = AlarmSchedulerImp(this)
 
         val viewModel = HomeViewModel(repository)
-        val settingsViewModel = SettingsViewModel(viewModel, repository)
+        val settingsViewModel = SettingsViewModel(viewModel, repository, SettingsPreferences(this))
         val favViewModel = FavViewModel( repository)
-
+        val alertsViewModel = AlertsViewModel(
+            repository = repository,
+            settingsPreferences = settingsViewModel.settingsPreferences,
+            alarmScheduler = alarmScheduler,
+        )
 
 
         setContent {
-            WeatherRoute(viewModel = viewModel, settingsViewModel = settingsViewModel, favViewModel = favViewModel)
+            WeatherRoute(
+                viewModel = viewModel,
+                settingsViewModel = settingsViewModel,
+                favViewModel = favViewModel,
+                alertsViewModel = alertsViewModel
+            )
         }
     }
 }
 
 @Composable
-fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel, favViewModel: FavViewModel) {
+fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel, favViewModel: FavViewModel,
+                 alertsViewModel: AlertsViewModel) {
     val weatherState by viewModel.weatherState.collectAsState()
     val forecastState by viewModel.hourlyState.collectAsState()
     val dailyState by viewModel.dailyState.collectAsState()
@@ -93,8 +109,8 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
 
     LaunchedEffect(apiUnits, selectedLang) {
         viewModel.fetchWeather(
-            lat = 29.8319,
-            lon = 31.3601,
+            lat = 40.8319,
+            lon = 50.3601,
             apiKey = "a50b3547c713e7be1ec57c696006497f",
             units = apiUnits,
             lang = selectedLang
@@ -134,10 +150,7 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
 
                         "settings" -> SettingsScreen(settingsViewModel)
                         "fav" ->FavouriteWeatherScreen(favViewModel,settingsViewModel)
-                        "alerts" -> Text(
-                            "Alerts Screen",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        "alerts" -> AlertsScreen(alertsViewModel,selectedLang)
                     }
                 }
 

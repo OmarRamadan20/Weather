@@ -4,19 +4,18 @@ import com.example.weather.data.config.db.FavLocation
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
-import com.example.weather.data.models.map.CityResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weatherapp.data.models.Alerts
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
-interface NetworkRepository {
+interface WeatherRepository {
     suspend fun getCurrentWeather(
         lat: Double,
         lon: Double,
-        apiKey: String,
-        units: String,
-        lang: String
+        apiKey: String = "a50b3547c713e7be1ec57c696006497f",
+        units: String="metric",
+        lang: String="en"
     ): MyResult<WeatherResponse>
 
     suspend fun getHourlyForecast(
@@ -47,6 +46,19 @@ interface NetworkRepository {
     suspend fun addLocationToFav(location: FavLocation)
 
     suspend fun deleteLocationFromFav(location: FavLocation)
+
+    fun getAllAlerts(): Flow<List<Alerts>>
+
+    suspend fun addAlert(alert: Alerts):Long
+
+    suspend fun deleteAlert(alert: Alerts)
+
+    suspend fun getAlertById(id: Int): Alerts?
+
+    suspend fun updateAlertStatus(alertId: Int, isEnabled: Boolean)
+
+
+
 
 
 }

@@ -46,4 +46,57 @@
     <string name="sunrise2">Sunrise: %1$s</string>
     <string name="sunset2">Sunset: %1$s</string>
 
+
+    <string name="alert_title">Weather Alert ⚠️</string>
+    <string name="rain">Heavy Rain detected 🌧️</string>
+    <string name="wind">Strong Winds detected 💨</string>
+    <string name="temp">Temperature threshold reached 🌡️</string>
+    <string name="storm">Thunderstorm warning ⛈️</string>
+
+    <string name="alert_msg_format">Attention! %1$s is detected in your area.</string>
+    <string name="check_app">Open app for more details</string>
+
+    <string name="threshold_reached">Threshold reached: %1$s</string>
+    <string name="temp_threshold_msg">Temp is %1$.1f°, higher than your limit (%2$.1f°)</string>
+    <string name="wind_threshold_msg">Wind speed %1$.1f km/h, exceeds your limit (%2$.1f km/h)</string>
+
+
+    <string name="threshold_level">Threshold Level</string>
+    <string name="alert_trigger">Triggered at:</string>
+
+    <string name="delete">Delete</string>
+
+
+    <string name="next">Next</string>
+
+
+    <string name="configure_new_alert">Configure New Alert</string>
+    <string name="triggers_on_storm">Trigger on storms ⛈️</string>
+    <string name="active_duration">Active Duration</string>
+
+    <string name="start">Start</string>
+    <string name="end">End</string>
+
+    <string name="save_alert">Save Alert ✅</string>
+    <string name="ok">Ok</string>
+
+    <string name="notifications">Notifications</string>
+    <string name="alarm_sound">Alarm Sound</string>
+
+    <string name="tap_to_create_alert">Tap to create a new alert ➕</string>
+    <string name="no_alerts_set">No alerts set at the moment</string>
+
+
+
+    <string name="weather_alerts">Weather Alerts</string>
+    <string name="add_alert">Add New Alert</string>
+
+    <string name="active_alerts">Active Alerts</string>
+    <string name="inactive_alerts">Inactive Alerts</string>
+
+    <string name="threshold_value">Threshold Value</string>
+
+
+
+
 </resources>

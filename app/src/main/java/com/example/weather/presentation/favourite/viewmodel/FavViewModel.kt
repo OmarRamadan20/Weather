@@ -7,7 +7,7 @@ import com.example.weather.data.config.db.FavLocation
 import com.example.weather.data.config.db.WeatherState
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.models.map.CityResponseItem
-import com.example.weather.data.repo.NetworkRepository
+import com.example.weather.data.repo.WeatherRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class FavViewModel(private val repository: NetworkRepository) : ViewModel() {
+class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
 
     private val _citySuggestions = MutableStateFlow<MyResult<List<CityResponseItem>>>(MyResult.Success(emptyList()))
     val citySuggestions = _citySuggestions.asStateFlow()

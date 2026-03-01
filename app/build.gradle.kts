@@ -144,6 +144,12 @@ dependencies {
     testImplementation("androidx.test.ext:junit-ktx:1.1.5")
 
 
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    // الـ Lottie لـ Compose
+    implementation("com.airbnb.android:lottie-compose:6.1.0")
+
+
+
 }
 
 

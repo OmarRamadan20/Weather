@@ -31,6 +31,7 @@ import com.example.weather.R
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -92,10 +93,10 @@ fun AlertsScreen(alertsViewModel: AlertsViewModel,selectedLang: String) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showBottomSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                containerColor = Color(0xFF3F51B5),
+                contentColor = Color.White,
                 shape = CircleShape,
-                modifier = Modifier.padding(bottom = 70.dp, end = 10.dp)
+                modifier = Modifier.padding(bottom = 80.dp, end = 10.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_alert))
             }

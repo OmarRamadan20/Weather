@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -98,7 +99,8 @@ fun FavouriteWeatherScreen(viewModel: FavViewModel, settingsViewModel: SettingsV
                     },
                     containerColor = if (isOffline) Color.Gray else Color(0xFF3F51B5),
                     contentColor = Color.White,
-                    modifier = Modifier.padding(bottom = 60.dp)
+                    shape = CircleShape,
+                    modifier = Modifier.padding(bottom = 80.dp,end = 10.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Add Location")
                 }

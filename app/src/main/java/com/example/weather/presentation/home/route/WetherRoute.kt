@@ -40,6 +40,9 @@ import com.example.weather.presentation.home.view.WeatherScreen
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
 import com.example.weather.presentation.settings.view.SettingsScreen
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import com.example.weather.presentation.splash.SplashScreen
+import com.example.weather.utils.NetworkObserver
+import com.example.weather.utils.NoInternetView
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -49,9 +52,17 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
     val weatherState by viewModel.weatherState.collectAsState()
     val forecastState by viewModel.hourlyState.collectAsState()
     val dailyState by viewModel.dailyState.collectAsState()
-    val isOnline by viewModel.networkStatus.collectAsState()
     val tempUnit by settingsViewModel.tempUnit.collectAsState()
     val selectedLang by settingsViewModel.language.collectAsState()
+
+    val networkStatus by viewModel.networkStatus.collectAsState()
+
+    val isOnline = networkStatus == NetworkObserver.Status.Available
+    val isOffline = networkStatus == NetworkObserver.Status.Lost
+    var showSplash by remember { mutableStateOf(true) }
+
+
+
 
 
 
@@ -65,14 +76,20 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
     }
 
 
-    LaunchedEffect(apiUnits, selectedLang) {
-        viewModel.fetchWeather(
-            lat = 40.8319,
-            lon = 50.3601,
-            apiKey = "a50b3547c713e7be1ec57c696006497f",
-            units = apiUnits,
-            lang = selectedLang
-        )
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(2500)
+        showSplash = false
+    }
+    LaunchedEffect(apiUnits, selectedLang, isOnline) {
+        if (isOnline) {
+            viewModel.fetchWeather(
+                lat = 51.5072,
+                lon = 0.1276,
+                apiKey = "a50b3547c713e7be1ec57c696006497f",
+                units = apiUnits,
+                lang = selectedLang
+            )
+        }
     }
 
     val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
@@ -88,50 +105,64 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
 
         Box(modifier = Modifier.fillMaxSize()) {
 
-            when {
-                weatherState is MyResult.Loading || forecastState is MyResult.Loading || dailyState is MyResult.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            if (!showSplash) {
+
+                if (!isOnline && currentScreen == "home" && weatherState !is MyResult.Success) {
+                    NoInternetView(onRetry = {
+                        viewModel.fetchWeatherForLocation(lastLat, lastLon)
+                    })
                 }
+             else {
+                    when {
+                        weatherState is MyResult.Loading || forecastState is MyResult.Loading || dailyState is MyResult.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
 
-                weatherState is MyResult.Success && forecastState is MyResult.Success && dailyState is MyResult.Success -> {
-                    val weatherData = (weatherState as MyResult.Success).data
-                    val hourlyData = (forecastState as MyResult.Success).data
-                    val dailyData = (dailyState as MyResult.Success).data
+                        weatherState is MyResult.Success && forecastState is MyResult.Success && dailyState is MyResult.Success -> {
+                            val weatherData = (weatherState as MyResult.Success).data
+                            val hourlyData = (forecastState as MyResult.Success).data
+                            val dailyData = (dailyState as MyResult.Success).data
 
-                    when (currentScreen) {
-                        "home" -> WeatherScreen(
-                            weatherData = weatherData,
-                            hourlyResponse = hourlyData,
-                            dailyData = dailyData,
-                            selectedLang = selectedLang,
-                            isOnline = isOnline,
-                            onRetry = {
-                                viewModel.fetchWeatherForLocation(lastLat, lastLon)
+                            when (currentScreen) {
+                                "home" -> WeatherScreen(
+                                    weatherData = weatherData,
+                                    hourlyResponse = hourlyData,
+                                    dailyData = dailyData,
+                                    selectedLang = selectedLang,
+                                    isOnline = networkStatus,
+                                    onRetry = {
+                                        viewModel.fetchWeatherForLocation(lastLat, lastLon)
+                                    }
+                                )
+
+                                "settings" -> SettingsScreen(settingsViewModel)
+                                "fav" -> FavouriteWeatherScreen(favViewModel, settingsViewModel)
+                                "alerts" -> AlertsScreen(alertsViewModel, selectedLang)
                             }
-                        )
+                        }
 
-                        "settings" -> SettingsScreen(settingsViewModel)
-                        "fav" ->FavouriteWeatherScreen(favViewModel,settingsViewModel)
-                        "alerts" -> AlertsScreen(alertsViewModel,selectedLang)
+                        weatherState is MyResult.Error -> Text(
+                            "Error: ${(weatherState as MyResult.Error).message}",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
                 }
 
-                weatherState is MyResult.Error -> Text(
-                    "Error: ${(weatherState as MyResult.Error).message}",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+
+                if (weatherState is MyResult.Success && forecastState is MyResult.Success) {
+                    Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                        WeatherBottomBar(
+                            currentScreen = currentScreen,
+                            onNavigate = { newScreen -> currentScreen = newScreen }
+                        )
+                    }
 
 
-            if (weatherState is MyResult.Success && forecastState is MyResult.Success) {
-                Box(modifier = Modifier.align(Alignment.BottomCenter)) {
-                    WeatherBottomBar(
-                        currentScreen = currentScreen,
-                        onNavigate = { newScreen -> currentScreen = newScreen }
-                    )
                 }
+            }
+            if (showSplash) {
 
-
+                SplashScreen()
             }
         }
     }

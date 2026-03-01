@@ -8,6 +8,7 @@ import com.example.weather.data.config.db.WeatherState
 import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.repo.WeatherRepository
+import com.example.weather.utils.NetworkObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,6 +25,13 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
 
     private val _errorFlow = MutableStateFlow<String?>(null)
     val errorFlow = _errorFlow.asStateFlow()
+
+    private val _networkStatus = MutableStateFlow(NetworkObserver.Status.Available)
+    val networkStatus = _networkStatus.asStateFlow()
+
+    fun updateNetworkStatus(status: NetworkObserver.Status) {
+        _networkStatus.value = status
+    }
 
     fun clearError() { _errorFlow.value = null }
 

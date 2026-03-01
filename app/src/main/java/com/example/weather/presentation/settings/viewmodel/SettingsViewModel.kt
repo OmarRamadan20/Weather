@@ -9,6 +9,7 @@ import com.example.weather.data.datasources.remote.network.MyResult
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
+import com.example.weather.utils.NetworkObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -40,11 +41,12 @@ class SettingsViewModel(
 
     private val _citySuggestions = MutableStateFlow<MyResult<List<CityResponseItem>>>(MyResult.Success(emptyList()))
     val citySuggestions = _citySuggestions.asStateFlow()
+    private val _networkStatus = MutableStateFlow(NetworkObserver.Status.Available)
+    val networkStatus = _networkStatus.asStateFlow()
 
-    val tU = settingsPreferences.temperatureUnit.stateIn(
-        viewModelScope, SharingStarted.Eagerly, "metric"
-    )
-
+    fun updateNetworkStatus(status: NetworkObserver.Status) {
+        _networkStatus.value = status
+    }
 
 
 

@@ -44,9 +44,10 @@ import coil.compose.AsyncImage
 import com.example.weather.R
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
-import com.example.weather.data.models.forecast.DailyItem
 import com.example.weather.data.models.forecast.ListItem
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weather.utils.NetworkObserver
+import com.example.weather.utils.NoInternetView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -64,12 +65,15 @@ fun WeatherScreen(
     weatherData: WeatherResponse,
     hourlyResponse: HourlyResponse,
     dailyData: DailyResponse,
-    selectedLang: String
+    isOnline: NetworkObserver.Status,
+    selectedLang: String,
+    onRetry: () -> Unit
 ) {
 
     val context = LocalContext.current
     val currentLocale = if (selectedLang.contains("ar", ignoreCase = true))
         Locale("ar") else Locale("en")
+
 
     val configuration = Configuration(context.resources.configuration)
     configuration.setLocale(currentLocale)
@@ -81,39 +85,43 @@ fun WeatherScreen(
         val forecastList = hourlyResponse.list?.filterNotNull() ?: emptyList()
         val dailyData = dailyData.list?.filterNotNull() ?: emptyList()
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(SoftBlue, SoftPink)))
-        ) {
-            Column(
+        if (isOnline == NetworkObserver.Status.Lost) {
+            NoInternetView(onRetry = onRetry)
+        }else {
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(Brush.verticalGradient(listOf(SoftBlue, SoftPink)))
             ) {
-                MainWeatherCard(weatherData)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    MainWeatherCard(weatherData)
 
-                Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
 
-                HourlyForecastSection(hourlyData = forecastList, selectedLang = selectedLang)
+                    HourlyForecastSection(hourlyData = forecastList, selectedLang = selectedLang)
 
-                Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
 
-                WeatherDetailGrid(weatherData)
+                    WeatherDetailGrid(weatherData)
 
-                Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
 
-                SunPhaseSection(weatherData,currentLocale)
+                    SunPhaseSection(weatherData, currentLocale)
 
-                Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
 
-                DailyForecastSection(
-                    dailyData = dailyData,
-                    selectedLang = selectedLang
-                )
-                Spacer(modifier = Modifier.height(40.dp))
+                    DailyForecastSection(
+                        dailyData = dailyData,
+                        selectedLang = selectedLang
+                    )
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
             }
         }
     }

@@ -51,6 +51,8 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     }
 
 
+    val networkStatus by viewModel.networkStatus.collectAsState()
+
     val locationPermissionState = rememberPermissionState(
         Manifest.permission.ACCESS_FINE_LOCATION
     )

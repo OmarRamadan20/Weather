@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.weather.data.config.db.FavLocation
 import com.example.weather.presentation.favourite.viewmodel.FavViewModel
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
+import com.example.weather.utils.NetworkObserver
 import java.util.Locale
 
 
@@ -61,6 +63,7 @@ fun FavouriteWeatherScreen(viewModel: FavViewModel, settingsViewModel: SettingsV
 
     val currentUnits by settingsViewModel.tempUnit.collectAsStateWithLifecycle()
 
+    val networkStatus by viewModel.networkStatus.collectAsState()
 
 
     val currentLang by settingsViewModel.language.collectAsStateWithLifecycle()
@@ -84,10 +87,18 @@ fun FavouriteWeatherScreen(viewModel: FavViewModel, settingsViewModel: SettingsV
         Log.e("FavScreen", "Lang: $currentLang")
         Scaffold(
             floatingActionButton = {
+                val isOffline = networkStatus == NetworkObserver.Status.Lost
                 FloatingActionButton(
-                    onClick = { showMapPicker = true },
-                    containerColor = Color(0xFF3F51B5),
-                    contentColor = Color.White
+                    onClick = {
+                        if (isOffline) {
+                            Toast.makeText(context, "No Internet", Toast.LENGTH_SHORT).show()
+                        } else {
+                            showMapPicker = true
+                        }
+                    },
+                    containerColor = if (isOffline) Color.Gray else Color(0xFF3F51B5),
+                    contentColor = Color.White,
+                    modifier = Modifier.padding(bottom = 60.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Add Location")
                 }
@@ -151,14 +162,22 @@ fun FavouriteWeatherScreen(viewModel: FavViewModel, settingsViewModel: SettingsV
                         favViewModel = viewModel,
                         settingsViewModel = settingsViewModel,
                         onLocationSelected = { latLng ->
-                            viewModel.fetchWeatherForMapPoint(
-                                lat = latLng.latitude,
-                                lon = latLng.longitude,
-                                apiKey = "a50b3547c713e7be1ec57c696006497f",
-                                units = currentUnits,
-                                lang = currentLang
-                            )
-                            showBottomSheet = true
+                            if (networkStatus == NetworkObserver.Status.Available) {
+                                viewModel.fetchWeatherForMapPoint(
+                                    lat = latLng.latitude,
+                                    lon = latLng.longitude,
+                                    apiKey = "a50b3547c713e7be1ec57c696006497f",
+                                    units = currentUnits,
+                                    lang = currentLang
+                                )
+                                showBottomSheet = true
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    if (currentLang == "ar") "انقطع الاتصال بالإنترنت" else "Connection lost",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         },
                         onDismiss = { showMapPicker = false }
                     )

@@ -3,7 +3,6 @@ package com.example.weather.data.datasources.local
 import com.example.weather.data.config.db.FavLocation
 import com.example.weatherapp.data.models.Alerts
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
 interface LocalDataSource {
 

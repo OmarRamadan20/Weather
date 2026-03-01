@@ -2,7 +2,7 @@ package com.example.weather.data.repo
 
 import com.example.weather.data.config.db.FavLocation
 import com.example.weather.data.datasources.local.LocalDataSource
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.data.datasources.remote.network.NetworkDataSource
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse

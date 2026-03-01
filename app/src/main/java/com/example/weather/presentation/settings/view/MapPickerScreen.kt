@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
 import com.google.accompanist.permissions.*
 import com.google.android.gms.maps.CameraUpdateFactory

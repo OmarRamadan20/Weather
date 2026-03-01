@@ -1,7 +1,7 @@
 package com.example.weather.presentation.home.viewmodel
 
 import android.util.Log
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weather.presentation.favourite.viewmodel.MainDispatcherRule
 import io.mockk.coEvery

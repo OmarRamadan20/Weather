@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weather.data.config.db.FavLocation
 import com.example.weather.data.config.db.WeatherState
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weather.utils.NetworkObserver

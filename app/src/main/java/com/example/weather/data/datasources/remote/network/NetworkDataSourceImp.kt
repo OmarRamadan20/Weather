@@ -6,6 +6,7 @@ import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.map.CityResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weather.utils.MyResult
 
 class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDataSource {
     override suspend fun getCurrentWeather(
@@ -48,7 +49,7 @@ class NetworkDataSourceImp(private val apiService: WeatherApiService): NetworkDa
     override suspend fun getCitySuggestions(
         query: String,
         limit: Int,
-        apiKey: String): MyResult<List<CityResponseItem>>{
+        apiKey: String): MyResult<List<CityResponseItem>> {
         return try {
             val response = apiService.getCitySuggestions(query, limit, apiKey)
             MyResult.Success(response)

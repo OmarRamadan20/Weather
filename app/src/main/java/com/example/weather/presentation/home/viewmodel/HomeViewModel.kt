@@ -3,7 +3,7 @@ package com.example.weather.presentation.home.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.weather.WeatherResponse
@@ -78,8 +78,8 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
             }
         }
     }
-    private var lastLat = 29.8319
-    private var lastLon = 31.3601
+    private var lastLat = 62.2786
+    private var lastLon = 12.3402
 
 
     fun fetchWeatherWithNewSettings(

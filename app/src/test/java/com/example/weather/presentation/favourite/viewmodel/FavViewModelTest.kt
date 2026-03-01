@@ -1,7 +1,7 @@
 package com.example.weather.presentation.favourite.viewmodel
 
 import com.example.weather.data.config.db.FavLocation
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.data.models.weather.Main
 import com.example.weather.data.models.weather.Sys
 import com.example.weather.data.models.weather.WeatherResponse

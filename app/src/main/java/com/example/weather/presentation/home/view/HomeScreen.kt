@@ -396,7 +396,7 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
                     color = Color(0xFF2D3142)
                 )
                 Text(
-                    text = day.weather?.getOrNull(0)?.main ?: "Clear",
+                    text = day.weather?.getOrNull(0)?.description?.replaceFirstChar { it.uppercase() } ?: "Clear",
                     fontSize = 13.sp,
                     color = Color.Gray
                 )
@@ -438,12 +438,10 @@ fun DailyWeatherCard(day: com.example.weather.data.models.daily.ListItem, index:
 }
 @Composable
 fun getTemperatureColors(temp: Int): List<Color> {
-    return when {
-        temp <= 5 -> listOf(Color(0xFF1A237E), Color(0xFF5C6BC0))
-        temp in 6..15 -> listOf(Color(0xFF61A3CC), Color(0xFFA6C1EE))
-        temp in 16..27 -> listOf(Color(0xFFF6D365), Color(0xFFFDA085))
-        else -> listOf(Color(0xFFFF5F6D), Color(0xFFFFC371))
-    }
+    return listOf(
+        Color(0xFF3F51B5),
+        Color(0xFF5C6BC0)
+    )
 }
 
 @Composable
@@ -633,7 +631,6 @@ fun formatToHour(t: Int?, locale: Locale = Locale.getDefault()): String {
 
 fun formatTime(t: Int?, locale: Locale): String {
     return t?.let {
-        // نستخدم الـ locale اللي جاي من الإعدادات (ar أو en)
         SimpleDateFormat("hh:mm a", locale).format(Date(it.toLong() * 1000))
     } ?: ""
 }
@@ -708,14 +705,13 @@ fun CloudAnimation() {
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-
         CloudShapePro(
             size = 280.dp,
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .offset(x = fastOffset.dp, y = (-120).dp)
                 .scale(cloudPulse)
-                .alpha(0.7f) // وضوح عالي
+                .alpha(0.6f)
         )
 
         CloudShapePro(
@@ -724,30 +720,33 @@ fun CloudAnimation() {
                 .align(Alignment.TopEnd)
                 .offset(x = (-fastOffset / 2).dp, y = 80.dp)
                 .scale(cloudPulse * 0.8f)
-                .alpha(0.5f)
+                .alpha(0.4f)
         )
     }
 }
 
 @Composable
 fun CloudShapePro(size: Dp, modifier: Modifier = Modifier) {
+    val cloudColorInner = Color(0xFFE0E0E0)
+    val cloudColorOuter = Color(0xFFBDBDBD)
+
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.6f), Color.Transparent)
+                        colors = listOf(cloudColorOuter.copy(alpha = 0.5f), Color.Transparent)
                     ), CircleShape
                 )
                 .blur(40.dp)
         )
         Box(
             modifier = Modifier
-                .fillMaxSize(0.6f)
+                .fillMaxSize(0.7f)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.9f), Color.Transparent)
+                        colors = listOf(cloudColorInner.copy(alpha = 0.8f), Color.Transparent)
                     ), CircleShape
                 )
                 .blur(20.dp)

@@ -51,7 +51,6 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
                 _weatherState.value = weatherResult
 
                 _hourlyState.value = hourlyResponse
-                Log.e("HomeViewModel", "$lat $lon")
 
             } catch (e: Exception) {
                 val errorMessage = e.message ?: "Unknown Network Error"

@@ -91,7 +91,6 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
 
 
     fun searchCities(query: String) {
-        Log.d("MapSearch", "Searching for: $query")
         if (query.trim().length < 3) {
             _citySuggestions.value = MyResult.Success(emptyList())
             return
@@ -101,10 +100,8 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
             _citySuggestions.value = MyResult.Loading
             try {
                 val results = repository.getCitySuggestions(query= query,8, apiKey = "a50b3547c713e7be1ec57c696006497f")
-                Log.d("MapSearch", "Results count: ${results}")
                 _citySuggestions.value = results
             } catch (e: Exception) {
-                Log.e("MapSearch", "Error: ${e.message}")
                 _citySuggestions.value = MyResult.Error(e.message ?: "Unknown error")
             }
         }

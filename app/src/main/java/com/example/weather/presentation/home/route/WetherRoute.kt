@@ -31,7 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.weather.R
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.presentation.alerts.view.AlertsScreen
 import com.example.weather.presentation.alerts.viewmodel.AlertsViewModel
 import com.example.weather.presentation.favourite.view.FavouriteWeatherScreen
@@ -66,8 +66,8 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
 
 
 
-    var lastLat = 29.8319
-    var lastLon = 31.3601
+    var lastLat = 62.2786
+    var lastLon = 12.3402
     var currentScreen by remember { mutableStateOf("home") }
     val apiUnits = when(tempUnit) {
         "Fahrenheit" -> "imperial"
@@ -83,8 +83,8 @@ fun WeatherRoute(viewModel: HomeViewModel, settingsViewModel: SettingsViewModel,
     LaunchedEffect(apiUnits, selectedLang, isOnline) {
         if (isOnline) {
             viewModel.fetchWeather(
-                lat = 51.5072,
-                lon = 0.1276,
+                lat = 62.2786,
+                lon = 12.3402,
                 apiKey = "a50b3547c713e7be1ec57c696006497f",
                 units = apiUnits,
                 lang = selectedLang

@@ -5,6 +5,7 @@ import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.map.CityResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weather.utils.MyResult
 
 interface NetworkDataSource {
 

@@ -90,6 +90,9 @@
 
     <string name="threshold_value">قيمة الحد</string>
 
+    <string name="sunrise2">الشروق: %1$s</string>
+    <string name="sunset2">الغروب: %1$s</string>
+
 
 
 </resources>

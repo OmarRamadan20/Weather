@@ -10,7 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.weather.R
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weatherapp.data.models.Alerts
 import com.example.weather.presentation.alerts.service.AlarmService

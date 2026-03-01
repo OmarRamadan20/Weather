@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.weather.data.datasources.remote.network.MyResult
+import com.example.weather.utils.MyResult
 import com.example.weather.presentation.favourite.viewmodel.FavViewModel
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi

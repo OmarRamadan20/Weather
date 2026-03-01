@@ -1,4 +1,4 @@
-package com.example.weather.data.datasources.remote.network
+package com.example.weather.utils
 
 sealed class MyResult<out T> {
     object Loading : MyResult<Nothing>()

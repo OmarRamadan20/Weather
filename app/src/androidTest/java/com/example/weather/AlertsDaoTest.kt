@@ -21,7 +21,6 @@ class AlertsDaoTest {
     private lateinit var database: AppDatabase
     private lateinit var dao: AlertsDao
 
-    // تضمن تنفيذ العمليات بشكل متزامن خلف بعضها
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
@@ -64,7 +63,14 @@ class AlertsDaoTest {
 
     @Test
     fun deleteAlert_removesAlertFromDb() = runTest {
-        val alert = Alerts(id = 5, triggerType = "Wind", thresholdValue = 15, deliveryType = "Alarm", startDate = 0L, endDate = 0L)
+        val alert = Alerts(
+            id = 5
+            , triggerType = "Wind"
+            , thresholdValue = 15
+            , deliveryType = "Alarm"
+            , startDate = 0L
+            , endDate = 0L)
+
         dao.insertAlert(alert)
 
         dao.deleteAlert(alert)
@@ -75,7 +81,14 @@ class AlertsDaoTest {
 
     @Test
     fun updateAlertStatus_updatesIsEnabledField() = runTest {
-        val alert = Alerts(id = 1, triggerType = "Temp", thresholdValue = 30, deliveryType = "Notification", startDate = 0L, endDate = 0L, isEnabled = true)
+        val alert = Alerts(
+            id = 1
+            , triggerType = "Temp"
+            , thresholdValue = 30
+            , deliveryType = "Notification"
+            , startDate = 0L
+            , endDate = 0L
+            , isEnabled = true)
         dao.insertAlert(alert)
 
         dao.updateAlertStatus(1, false)

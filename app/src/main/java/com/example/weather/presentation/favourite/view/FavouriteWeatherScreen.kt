@@ -177,7 +177,6 @@ fun FavouriteWeatherScreen(viewModel: FavViewModel, settingsViewModel: SettingsV
                                 viewModel.fetchWeatherForMapPoint(
                                     lat = latLng.latitude,
                                     lon = latLng.longitude,
-                                    apiKey = "a50b3547c713e7be1ec57c696006497f",
                                     units = currentUnits,
                                     lang = currentLang
                                 )

@@ -1,6 +1,5 @@
 package com.example.weather.presentation.favourite.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weather.data.config.db.FavLocation
@@ -18,7 +17,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
-
     private val _citySuggestions = MutableStateFlow<MyResult<List<CityResponseItem>>>(MyResult.Success(emptyList()))
     val citySuggestions = _citySuggestions.asStateFlow()
 
@@ -33,7 +31,6 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
         _networkStatus.value = status
     }
 
-    fun clearError() { _errorFlow.value = null }
 
     val favLocations: StateFlow<List<FavLocation>> = repository.getFavourites()
         .stateIn(
@@ -45,11 +42,9 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
     private val _selectedWeather = MutableStateFlow<WeatherState?>(null)
     val selectedWeather: StateFlow<WeatherState?> = _selectedWeather
 
-    fun fetchWeatherForMapPoint(lat: Double, lon: Double, apiKey: String, units: String, lang: String) {
+    fun fetchWeatherForMapPoint(lat: Double, lon: Double, units: String, lang: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.getCurrentWeather(lat, lon, apiKey, units, lang)
-
-            when (result) {
+            when (val result = repository.getCurrentWeather(lat, lon, units, lang)) {
                 is MyResult.Success -> {
                     val data = result.data
                     _selectedWeather.value = WeatherState(
@@ -64,7 +59,7 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
                     )
                 }
                 is MyResult.Error -> {
-                    _errorFlow.value = result.message ?: "Failed to fetch weather data"
+                    _errorFlow.value = result.message
 
                 }
 
@@ -107,7 +102,7 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
         viewModelScope.launch {
             _citySuggestions.value = MyResult.Loading
             try {
-                val results = repository.getCitySuggestions(query= query,8, apiKey = "a50b3547c713e7be1ec57c696006497f")
+                val results = repository.getCitySuggestions(query= query,8)
                 _citySuggestions.value = results
             } catch (e: Exception) {
                 _citySuggestions.value = MyResult.Error(e.message ?: "Unknown error")
@@ -116,7 +111,7 @@ class FavViewModel(private val repository: WeatherRepository) : ViewModel() {
     }
 
     fun onCitySelected(city: CityResponseItem?) {
-        fetchWeatherForMapPoint(city?.lat?: 0.0, city?.lon?:0.0,"a50b3547c713e7be1ec57c696006497f",
+        fetchWeatherForMapPoint(city?.lat?: 0.0, city?.lon?:0.0,
             "metric","en")
         _citySuggestions.value = MyResult.Success(emptyList())
     }

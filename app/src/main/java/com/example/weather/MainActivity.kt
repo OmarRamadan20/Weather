@@ -60,10 +60,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WeatherRoute(
-                viewModel = viewModel,
                 settingsViewModel = settingsViewModel,
                 favViewModel = favViewModel,
-                alertsViewModel = alertsViewModel
+                alertsViewModel = alertsViewModel,
+                homeViewModel = viewModel
             )
         }
     }

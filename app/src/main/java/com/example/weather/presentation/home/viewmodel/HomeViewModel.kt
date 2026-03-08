@@ -19,6 +19,8 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
         private var savedUnit: String = "metric"
         private var savedLang: String = "en"
     }
+
+
     private val _weatherState = MutableStateFlow<MyResult<WeatherResponse>>(MyResult.Loading)
     val weatherState = _weatherState.asStateFlow()
 
@@ -35,15 +37,22 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
     private val _networkStatus = MutableStateFlow(NetworkObserver.Status.Available)
     val networkStatus = _networkStatus.asStateFlow()
 
+    private val _currentLat = MutableStateFlow(62.2786)
+    val currentLat = _currentLat.asStateFlow()
+
+    private val _currentLon = MutableStateFlow(12.3402)
+    val currentLon = _currentLon.asStateFlow()
+
 
     fun updateNetworkStatus(status: NetworkObserver.Status) {
         _networkStatus.value = status
 
         if (status == NetworkObserver.Status.Available && weatherState.value is MyResult.Error) {
-            fetchWeatherForLocation(lastLat, lastLon)
+            fetchWeatherForLocation(currentLat.value, currentLon.value)
         }
     }
-    fun fetchWeather(lat: Double, lon: Double, apiKey: String, units: String, lang: String) {
+    fun fetchWeather(lat: Double, lon: Double, units: String, lang: String) {
+
 
         if (_networkStatus.value == NetworkObserver.Status.Lost) {
             val noNetMessage = "No Internet Connection"
@@ -58,9 +67,9 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
             _dailyState.value = MyResult.Loading
 
             try {
-                val weatherResult = repository.getCurrentWeather(lat, lon, apiKey, units, lang)
-                val hourlyResponse = repository.getHourlyForecast(lat, lon, apiKey, units)
-                val dailyResponse = repository.dailyForecast(lat, lon, apiKey, lang, units)
+                val weatherResult = repository.getCurrentWeather(lat, lon, units, lang)
+                val hourlyResponse = repository.getHourlyForecast(lat, lon, units)
+                val dailyResponse = repository.dailyForecast(lat, lon, lang, units)
 
                 _weatherState.value = weatherResult
                 _hourlyState.value = hourlyResponse
@@ -78,8 +87,6 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
             }
         }
     }
-    private var lastLat = 62.2786
-    private var lastLon = 12.3402
 
 
     fun fetchWeatherWithNewSettings(
@@ -94,22 +101,20 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
 
 
         fetchWeather(
-            lat = lastLat,
-            lon = lastLon,
-            apiKey = "a50b3547c713e7be1ec57c696006497f",
+            lat = currentLat.value,
+            lon = currentLon.value,
             units = savedUnit,
             lang = savedLang
         )
     }
 
     fun fetchWeatherForLocation(lat: Double, lon: Double) {
-        lastLat = lat
-        lastLon = lon
+        _currentLat.value = lat
+        _currentLon.value = lon
 
         fetchWeather(
             lat = lat,
             lon = lon,
-            apiKey = "a50b3547c713e7be1ec57c696006497f",
             units = selectedUnit.value,
             lang = selectedLang.value
         )

@@ -14,6 +14,7 @@ import com.example.weather.utils.MyResult
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weatherapp.data.models.Alerts
 import com.example.weather.presentation.alerts.service.AlarmService
+import com.example.weather.utils.Constants
 
 class WeatherAlertWorker(
     context: Context,
@@ -49,7 +50,8 @@ class WeatherAlertWorker(
             val lat = prefs.getFloat("lat", 0f).toDouble()
             val lon = prefs.getFloat("lon", 0f).toDouble()
 
-            val weatherResponse = repository.getCurrentWeather(lat, lon)
+
+            val weatherResponse = repository.getCurrentWeather(lat, lon, Constants.API_KEY)
             var isTriggered = false
 
             when(weatherResponse){

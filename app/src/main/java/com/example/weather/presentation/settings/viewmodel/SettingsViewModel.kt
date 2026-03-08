@@ -115,7 +115,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             _citySuggestions.value = MyResult.Loading
             try {
-                val results = repository.getCitySuggestions(query= query,8, apiKey = "a50b3547c713e7be1ec57c696006497f")
+                val results = repository.getCitySuggestions(query= query,8)
                 Log.d("MapSearch", "Results count: ${results}")
                 _citySuggestions.value = results
             } catch (e: Exception) {

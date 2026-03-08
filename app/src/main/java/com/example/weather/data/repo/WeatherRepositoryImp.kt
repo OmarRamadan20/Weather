@@ -8,15 +8,16 @@ import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.map.CityResponseItem
 import com.example.weather.data.models.weather.WeatherResponse
+import com.example.weather.utils.Constants
 import com.example.weatherapp.data.models.Alerts
 import kotlinx.coroutines.flow.Flow
 
 class WeatherRepositoryImp(private val remoteDataSource: NetworkDataSource,
                            private val localDataSource: LocalDataSource): WeatherRepository {
+    val apiKey: String = Constants.API_KEY
     override suspend fun getCurrentWeather(
         lat: Double,
         lon: Double,
-        apiKey: String,
         units: String,
         lang: String
     ): MyResult<WeatherResponse> {
@@ -26,7 +27,6 @@ class WeatherRepositoryImp(private val remoteDataSource: NetworkDataSource,
     override suspend fun getHourlyForecast(
         lat: Double,
         lon: Double,
-        apiKey: String,
         units: String
     ): MyResult<HourlyResponse> {
         return remoteDataSource.getHourlyForecast(lat=lat,lon=lon,apiKey=apiKey,units=units)
@@ -35,7 +35,6 @@ class WeatherRepositoryImp(private val remoteDataSource: NetworkDataSource,
     override suspend fun dailyForecast(
         lat: Double,
         lon: Double,
-        apiKey: String,
         lang: String,
         units: String
         ): MyResult<DailyResponse> {
@@ -45,8 +44,7 @@ class WeatherRepositoryImp(private val remoteDataSource: NetworkDataSource,
 
     override suspend fun getCitySuggestions(
         query: String,
-        limit: Int,
-        apiKey: String): MyResult<List<CityResponseItem>> {
+        limit: Int): MyResult<List<CityResponseItem>> {
         return remoteDataSource.getCitySuggestions(query = query, limit = limit, apiKey = apiKey)
     }
 

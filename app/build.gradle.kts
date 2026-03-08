@@ -1,4 +1,5 @@
 import org.gradle.kotlin.dsl.androidTestImplementation
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -21,6 +22,16 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        val properties = Properties()
+        val localPropertiesFile = project.rootProject.file("local.properties")
+
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+
+        val apiKey = properties.getProperty("MAP_API_KEY") ?: ""
+        buildConfigField("String", "MAP_API_KEY", "\"$apiKey\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,6 +53,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig =true
     }
 }
 
@@ -62,6 +74,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.ads.mobile.sdk)
     implementation(libs.firebase.components)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

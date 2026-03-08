@@ -13,7 +13,6 @@ interface WeatherRepository {
     suspend fun getCurrentWeather(
         lat: Double,
         lon: Double,
-        apiKey: String = "a50b3547c713e7be1ec57c696006497f",
         units: String="metric",
         lang: String="en"
     ): MyResult<WeatherResponse>
@@ -21,7 +20,6 @@ interface WeatherRepository {
     suspend fun getHourlyForecast(
         lat: Double,
         lon: Double,
-        apiKey: String,
         units: String
     ): MyResult<HourlyResponse>
 
@@ -29,7 +27,6 @@ interface WeatherRepository {
     suspend fun dailyForecast(
         lat: Double,
         lon: Double,
-        apiKey: String,
         lang: String,
         units: String
         ): MyResult<DailyResponse>
@@ -37,8 +34,8 @@ interface WeatherRepository {
 
     suspend fun getCitySuggestions(
         query: String,
-        limit: Int = 8,
-        apiKey: String): MyResult<List<CityResponseItem>>
+        limit: Int = 8
+    ): MyResult<List<CityResponseItem>>
 
 
     fun getFavourites(): Flow<List<FavLocation>>

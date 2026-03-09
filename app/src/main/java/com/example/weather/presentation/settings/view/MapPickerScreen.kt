@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,8 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.weather.utils.MyResult
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
 import com.google.accompanist.permissions.*
@@ -29,7 +32,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
-
+import java.util.Locale
 fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
@@ -40,13 +43,32 @@ fun MapPickerScreen(
     viewModel: SettingsViewModel,
     onLocationSelected: (LatLng) -> Unit,
     onDismiss: () -> Unit
-) {
-    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-        MapLayout(
-            viewModel = viewModel,
-            onLocationSelected = onLocationSelected,
-            onDismiss = onDismiss
-        )
+)
+
+{
+
+    val context = LocalContext.current
+    val currentLang by viewModel.language.collectAsStateWithLifecycle()
+
+    val currentLocale = if (currentLang.contains("ar", ignoreCase = true)) Locale("ar") else Locale("en")
+    val configuration = Configuration(context.resources.configuration)
+    configuration.setLocale(currentLocale)
+    val localizedContext = context.createConfigurationContext(configuration)
+
+
+
+    CompositionLocalProvider(
+        LocalContext provides localizedContext,
+        LocalLayoutDirection provides if (currentLocale.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            MapLayout(
+                viewModel = viewModel,
+                onLocationSelected = onLocationSelected,
+                onDismiss = onDismiss,
+                localizedContext = localizedContext
+            )
+        }
     }
 }
 
@@ -54,19 +76,29 @@ fun MapPickerScreen(
 fun MapLayout(
     viewModel: SettingsViewModel,
     onLocationSelected: (LatLng) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    localizedContext: Context
 ) {
     val suggestionsResult by viewModel.citySuggestions.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(30.0444, 31.2357), 10f)
-    }
     val scope = rememberCoroutineScope()
+
+    val cairo = LatLng(30.0444, 31.2357)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(cairo, 10f)
+    }
+
+
+    val layoutDirection = LocalLayoutDirection.current
+    LaunchedEffect(layoutDirection) {
+        cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(cairo, 10f))
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
+            // تأكد إن دي false عشان الـ GPS ميسحبش الكاميرا لمكانك الحالي أول ما تفتح
             properties = MapProperties(isMyLocationEnabled = false),
             uiSettings = MapUiSettings(zoomControlsEnabled = true)
         )
@@ -85,8 +117,7 @@ fun MapLayout(
                         searchQuery = it
                         viewModel.searchCities(it)
                     },
-                    placeholder = { Text(stringResource(R.string.search_city_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(localizedContext.getString(R.string.search_city_placeholder)) },                    modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
@@ -146,15 +177,17 @@ fun MapLayout(
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
                 shape = RoundedCornerShape(12.dp)
-            ) { Text(stringResource(R.string.cancel)) }
+            ) {
+                Text(localizedContext.getString(R.string.cancel))
+            }
 
             Button(
                 onClick = { onLocationSelected(cameraPositionState.position.target) },
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5)),
                 shape = RoundedCornerShape(12.dp)
-            ) { Text(stringResource(R.string.confirm)
-            ) }
+            ) { Text(localizedContext.getString(R.string.confirm))
+             }
         }
     }
 }

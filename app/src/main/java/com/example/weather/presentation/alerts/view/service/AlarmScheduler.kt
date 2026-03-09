@@ -1,4 +1,4 @@
-package com.example.weather.presentation.alerts.service
+package com.example.weather.presentation.alerts.view.service
 
 import com.example.weatherapp.data.models.Alerts
     interface AlarmScheduler {

@@ -1,4 +1,4 @@
-package com.example.weather.presentation.alerts.service.worker
+package com.example.weather.presentation.alerts.view.service.worker
 
 import android.content.Context
 import androidx.work.ListenableWorker

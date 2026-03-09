@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val homeViewModel: HomeViewModel,
     private val repository: WeatherRepository,
     val settingsPreferences: SettingsPreferences
 ) : ViewModel() {
@@ -57,13 +56,12 @@ class SettingsViewModel(
     fun hideMap() {
         _isMapVisible.value = false
     }
+
     fun updateUnits(apiUnit: String) {
         _tempUnit.value = apiUnit
-        homeViewModel.fetchWeatherWithNewSettings(units = apiUnit, lang = language.value)
         viewModelScope.launch {
             settingsPreferences.saveTempUnit(apiUnit)
         }
-
     }
 
     fun updateLanguage(langName: String) {
@@ -80,13 +78,15 @@ class SettingsViewModel(
 
         Log.d("SettingsViewModel", "${_tempUnit.value}")
 
-        homeViewModel.fetchWeatherWithNewSettings(lang = langCode, units = _tempUnit.value)
-    }
+        viewModelScope.launch {
+            settingsPreferences.saveLanguage(langCode)
+        }    }
 
     fun updateLocationFromGPS(lat: Double, lon: Double) {
         Log.e("SettingsViewModel", "updateLocationFromGPS: $lat, $lon")
-        homeViewModel.fetchWeatherForLocation(lat, lon)
-    }
+        viewModelScope.launch {
+            settingsPreferences.saveLocation(lat, lon)
+        }    }
 
     fun toggleGps(enabled: Boolean) {
         _isGpsEnabled.value = enabled
@@ -95,13 +95,16 @@ class SettingsViewModel(
 
     fun updateWindUnit(unit: String) {
         _windUnit.value = unit
-        homeViewModel.fetchWeatherWithNewSettings(units=unit)
+        viewModelScope.launch {
+            settingsPreferences.saveWindUnit(unit)
+        }
     }
 
     fun getWeatherByMaps(latitude: Double, longitude: Double) {
-        homeViewModel.fetchWeatherForLocation(latitude, longitude)
-        hideMap()
-
+        viewModelScope.launch {
+            settingsPreferences.saveLocation(latitude, longitude)
+            hideMap()
+        }
     }
 
 

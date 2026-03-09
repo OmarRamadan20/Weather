@@ -1,4 +1,4 @@
-package com.example.weather.presentation.alerts.service
+package com.example.weather.presentation.alerts.view.service
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,7 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.example.weather.presentation.alerts.service.worker.WeatherAlertWorker
+import com.example.weather.presentation.alerts.view.service.worker.WeatherAlertWorker
 
 
 

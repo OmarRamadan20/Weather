@@ -4,9 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weatherapp.data.models.Alerts
-import com.example.weather.presentation.alerts.service.AlarmScheduler
+import com.example.weather.presentation.alerts.view.service.AlarmScheduler
 import com.example.weather.presentation.settings.viewmodel.SettingsPreferences
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

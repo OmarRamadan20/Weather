@@ -1,6 +1,7 @@
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
@@ -43,6 +45,17 @@ import com.example.weather.presentation.settings.view.SettingsScreen
 import com.example.weather.presentation.settings.viewmodel.SettingsViewModel
 import com.example.weather.presentation.splash.SplashScreen
 import java.util.Locale
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -116,45 +129,30 @@ fun WeatherBottomBar(currentScreen: String, onNavigate: (String) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 25.dp, vertical = 20.dp)
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
     ) {
         Surface(
             modifier = Modifier
-                .height(75.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(38.dp),
-            color = Color.White.copy(alpha = 0.9f),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
-            shadowElevation = 25.dp
+                .fillMaxWidth()
+                .height(68.dp),
+            shape = RoundedCornerShape(32.dp),
+            color = Color.White,
+            shadowElevation = 12.dp,
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.2f))
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NavIcon(
-                    icon = R.drawable.ic_home,
-                    isSelected = currentScreen == "home",
-                    label = "Home"
-                ) { onNavigate("home") }
-
-                NavIcon(
-                    icon = R.drawable.ic_heart,
-                    isSelected = currentScreen == "fav",
-                    label = "Favorites"
-                ) { onNavigate("fav") }
-
+                NavIcon(R.drawable.ic_home, currentScreen == "home", label = stringResource(R.string.home)) { onNavigate("home") }
+                NavIcon(R.drawable.ic_heart, currentScreen == "fav",label = stringResource(R.string.favourite) ) { onNavigate("fav") }
                 NavIcon(
                     icon = R.drawable.ic_notification,
                     isSelected = currentScreen == "alerts",
-                    label = "Alerts"
+                    label = stringResource(R.string.alerts),
                 ) { onNavigate("alerts") }
-
-                NavIcon(
-                    icon = R.drawable.ic_settings,
-                    isSelected = currentScreen == "settings",
-                    label = "Settings"
-                ) { onNavigate("settings") }
+                NavIcon(R.drawable.ic_settings, currentScreen == "settings", label = stringResource(R.string.settings)) { onNavigate("settings") }
             }
         }
     }
@@ -167,12 +165,39 @@ fun NavIcon(
     label: String,
     onClick: () -> Unit
 ) {
-    IconButton(onClick = onClick) {
-        Icon(
-            painter = painterResource(id = icon),
-            contentDescription = label,
-            tint = if (isSelected) Color(0xFF3F51B5) else Color.Gray.copy(alpha = 0.5f),
-            modifier = Modifier.size(if (isSelected) 28.dp else 24.dp)
-        )
+    val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1.0f)
+    val iconColor by animateColorAsState(
+        targetValue = if (isSelected) Color(0xFF3F51B5) else Color.Gray.copy(alpha = 0.6f)
+    )
+
+    Column(
+        modifier = Modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onClick() }
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = label,
+                tint = iconColor,
+                modifier = Modifier
+                    .size(26.dp)
+                    .scale(scale)
+            )
+
+        }
+
+        if (isSelected) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = iconColor
+            )
+        }
     }
 }

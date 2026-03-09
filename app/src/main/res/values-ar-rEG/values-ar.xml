@@ -93,6 +93,10 @@
     <string name="sunrise2">الشروق: %1$s</string>
     <string name="sunset2">الغروب: %1$s</string>
 
+    <string name="home">الرئيسية</string>
+    <string name="favourite">المفضلة</string>
+    <string name="alerts">التنبيهات</string>
+
 
 
 </resources>

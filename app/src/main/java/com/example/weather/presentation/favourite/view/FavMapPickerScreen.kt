@@ -89,7 +89,8 @@ fun FavMapPickerScreen(
                         viewModel = favViewModel,
                         isPermissionGranted = locationPermissionState.status.isGranted,
                         onLocationSelected = onLocationSelected,
-                        onDismiss = onDismiss
+                        onDismiss = onDismiss,
+                        localizedContext = localizedContext
                     )
                 }
             }
@@ -102,7 +103,8 @@ fun FavMapLayout(
     viewModel: FavViewModel,
     isPermissionGranted: Boolean,
     onLocationSelected: (LatLng) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    localizedContext: Context
 ) {
     val suggestionsResult by viewModel.citySuggestions.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
@@ -132,8 +134,7 @@ fun FavMapLayout(
                         searchQuery = it
                         viewModel.searchCities(it)
                     },
-                    placeholder = { Text(stringResource(R.string.search_city_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(localizedContext.getString(R.string.search_city_placeholder)) },                    modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
@@ -205,14 +206,14 @@ fun FavMapLayout(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.cancel))            }
+                Text(localizedContext.getString(R.string.cancel))           }
             Button(
                 onClick = { onLocationSelected(cameraPositionState.position.target) },
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5)),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.confirm))            }
+                Text(localizedContext.getString(R.string.confirm))          }
         }
     }
 }

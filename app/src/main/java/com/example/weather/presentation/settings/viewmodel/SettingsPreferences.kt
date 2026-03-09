@@ -1,6 +1,7 @@
 package com.example.weather.presentation.settings.viewmodel
 
 import android.content.Context
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -16,6 +17,10 @@ class SettingsPreferences(context: Context) {
         val TEMP_UNIT = stringPreferencesKey("temp_unit")
         val WIND_UNIT = stringPreferencesKey("wind_unit")
         val LANGUAGE = stringPreferencesKey("language")
+
+        val LATITUDE = doublePreferencesKey("latitude")
+        val LONGITUDE = doublePreferencesKey("longitude")
+
     }
 
     val temperatureUnit: Flow<String> = dataStore.data.map { it[TEMP_UNIT] ?: "metric" }
@@ -28,5 +33,19 @@ class SettingsPreferences(context: Context) {
 
     suspend fun saveWindUnit(unit: String) {
         dataStore.edit { it[WIND_UNIT] = unit }
+    }
+    suspend fun saveLanguage(lang: String) {
+        dataStore.edit { it[LANGUAGE] = lang }
+        }
+
+    val latitude: Flow<Double> = dataStore.data.map { it[LATITUDE] ?: 30.0444 }
+    val longitude: Flow<Double> = dataStore.data.map { it[LONGITUDE] ?: 31.2357 }
+
+
+    suspend fun saveLocation(lat: Double, lon: Double) {
+        dataStore.edit { preferences ->
+            preferences[LATITUDE] = lat
+            preferences[LONGITUDE] = lon
+        }
     }
 }

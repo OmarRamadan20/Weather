@@ -8,18 +8,18 @@ import com.example.weather.data.models.daily.DailyResponse
 import com.example.weather.data.models.hourly.HourlyResponse
 import com.example.weather.data.models.weather.WeatherResponse
 import com.example.weather.data.repo.WeatherRepository
+import com.example.weather.presentation.settings.viewmodel.SettingsPreferences
 import com.example.weather.utils.NetworkObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
-
-    companion object {
-        private var savedUnit: String = "metric"
-        private var savedLang: String = "en"
-    }
-
+class HomeViewModel(private val repository: WeatherRepository,
+                    private val settingsPreferences: SettingsPreferences
+) : ViewModel() {
 
     private val _weatherState = MutableStateFlow<MyResult<WeatherResponse>>(MyResult.Loading)
     val weatherState = _weatherState.asStateFlow()
@@ -37,19 +37,32 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
     private val _networkStatus = MutableStateFlow(NetworkObserver.Status.Available)
     val networkStatus = _networkStatus.asStateFlow()
 
-    private val _currentLat = MutableStateFlow(62.2786)
-    val currentLat = _currentLat.asStateFlow()
 
-    private val _currentLon = MutableStateFlow(12.3402)
-    val currentLon = _currentLon.asStateFlow()
+    init {
+        observeSettingsAndFetch()
+    }
+
+    private fun observeSettingsAndFetch() {
+        viewModelScope.launch {
+            combine(
+                settingsPreferences.temperatureUnit,
+                settingsPreferences.language,
+                settingsPreferences.latitude,
+                settingsPreferences.longitude,
+                networkStatus
+            ) { unit, lang, lat, lon, status ->
+                if (status == NetworkObserver.Status.Available) {
+                    fetchWeather(lat, lon, unit, lang)
+                } else {
+                    _weatherState.value = MyResult.Error("No Internet Connection")
+                }
+            }.collect()
+        }
+    }
 
 
     fun updateNetworkStatus(status: NetworkObserver.Status) {
         _networkStatus.value = status
-
-        if (status == NetworkObserver.Status.Available && weatherState.value is MyResult.Error) {
-            fetchWeatherForLocation(currentLat.value, currentLon.value)
-        }
     }
     fun fetchWeather(lat: Double, lon: Double, units: String, lang: String) {
 
@@ -89,36 +102,25 @@ class HomeViewModel(private val repository: WeatherRepository) : ViewModel() {
     }
 
 
-    fun fetchWeatherWithNewSettings(
-        units: String? = null,
-        lang: String? = null
-    ) {
-        units?.let { savedUnit = it }
-        lang?.let { savedLang = it }
+    fun refresh() {
+        viewModelScope.launch {
+            try {
+                val lat = settingsPreferences.latitude.first()
+                val lon = settingsPreferences.longitude.first()
+                val unit = settingsPreferences.temperatureUnit.first()
+                val lang = settingsPreferences.language.first()
 
-        selectedUnit.value = savedUnit
-        selectedLang.value = savedLang
+                val apiUnits = when (unit) {
+                    "Fahrenheit" -> "imperial"
+                    "Kelvin" -> "standard"
+                    else -> "metric"
+                }
 
-
-        fetchWeather(
-            lat = currentLat.value,
-            lon = currentLon.value,
-            units = savedUnit,
-            lang = savedLang
-        )
+                fetchWeather(lat, lon, apiUnits, lang)
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Refresh failed: ${e.message}")
+            }
+        }
     }
-
-    fun fetchWeatherForLocation(lat: Double, lon: Double) {
-        _currentLat.value = lat
-        _currentLon.value = lon
-
-        fetchWeather(
-            lat = lat,
-            lon = lon,
-            units = selectedUnit.value,
-            lang = selectedLang.value
-        )
-    }
-
 
 }

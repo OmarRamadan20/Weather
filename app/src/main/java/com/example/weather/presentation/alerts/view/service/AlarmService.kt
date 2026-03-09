@@ -1,4 +1,4 @@
-package com.example.weather.presentation.alerts.service
+package com.example.weather.presentation.alerts.view.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent

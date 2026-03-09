@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,9 +25,6 @@ fun HomeScreenContent(viewModel: HomeViewModel, settingsViewModel: SettingsViewM
     val tempUnit by settingsViewModel.tempUnit.collectAsState()
     val networkStatus by viewModel.networkStatus.collectAsState()
 
-    val currentLat by viewModel.currentLat.collectAsState()
-    val currentLon by viewModel.currentLon.collectAsState()
-
     val isOnline = networkStatus == NetworkObserver.Status.Available
 
     val apiUnits = when (tempUnit) {
@@ -37,16 +33,6 @@ fun HomeScreenContent(viewModel: HomeViewModel, settingsViewModel: SettingsViewM
         else -> "metric"
     }
 
-    LaunchedEffect(apiUnits, selectedLang, isOnline, currentLat, currentLon) {
-        if (isOnline) {
-            viewModel.fetchWeather(
-                lat = currentLat,
-                lon = currentLon,
-                units = apiUnits,
-                lang = selectedLang
-            )
-        }
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
@@ -66,14 +52,14 @@ fun HomeScreenContent(viewModel: HomeViewModel, settingsViewModel: SettingsViewM
                     selectedLang = selectedLang,
                     isOnline = networkStatus,
                     onRetry = {
-                        viewModel.fetchWeather(currentLat, currentLon, apiUnits, selectedLang)
+                        viewModel.refresh()
                     }
                 )
             }
 
             !isOnline && weatherState !is MyResult.Success -> {
                 NoInternetView(onRetry = {
-                    viewModel.fetchWeather(currentLat, currentLon, apiUnits, selectedLang)
+                    viewModel.refresh()
                 })
             }
 

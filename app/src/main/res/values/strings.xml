@@ -95,6 +95,12 @@
     <string name="inactive_alerts">Inactive Alerts</string>
 
     <string name="threshold_value">Threshold Value</string>
+    
+    
+    <string name="home"> Home</string>
+    <string name="favourite"> Favourite</string>
+    <string name="alerts"> Alerts</string>
+
 
 
 

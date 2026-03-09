@@ -12,7 +12,7 @@ import com.example.weather.data.config.network.RetrofitClient
 import com.example.weather.data.datasources.local.LocalDataSourceImp
 import com.example.weather.data.datasources.remote.network.NetworkDataSourceImp
 import com.example.weather.data.repo.WeatherRepositoryImp
-import com.example.weather.presentation.alerts.service.AlarmSchedulerImp
+import com.example.weather.presentation.alerts.view.service.AlarmSchedulerImp
 import com.example.weather.presentation.alerts.viewmodel.AlertsViewModel
 import com.example.weather.presentation.favourite.viewmodel.FavViewModel
 import com.example.weather.presentation.home.viewmodel.HomeViewModel
@@ -38,9 +38,10 @@ class MainActivity : ComponentActivity() {
         val repository = WeatherRepositoryImp(remoteDataSource,localDataSource)
 
         val alarmScheduler = AlarmSchedulerImp(this)
+        val settingsPreferences = SettingsPreferences(this)
 
-        val viewModel = HomeViewModel(repository)
-        val settingsViewModel = SettingsViewModel(viewModel, repository, SettingsPreferences(this))
+        val viewModel = HomeViewModel(repository,settingsPreferences)
+        val settingsViewModel = SettingsViewModel( repository, settingsPreferences)
         val favViewModel = FavViewModel( repository)
         val alertsViewModel = AlertsViewModel(
             repository = repository,

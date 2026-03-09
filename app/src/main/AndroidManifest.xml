@@ -38,11 +38,11 @@ xmlns:tools="http://schemas.android.com/tools">
         </intent-filter>
     </activity>
     <receiver
-        android:name=".presentation.alerts.service.AlarmReceiver"
+        android:name=".presentation.alerts.view.service.AlarmReceiver"
         android:enabled="true"
         android:exported="false" />
     <service
-        android:name=".presentation.alerts.service.AlarmService"
+        android:name=".presentation.alerts.view.service.AlarmService"
         android:foregroundServiceType="specialUse"
         android:exported="false"
         tools:targetApi="34"> <property

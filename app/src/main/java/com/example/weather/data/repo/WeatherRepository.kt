@@ -57,5 +57,4 @@ interface WeatherRepository {
 
 
 
-
 }

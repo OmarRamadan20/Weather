@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.ads.mobile.sdk)
     implementation(libs.firebase.components)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.lifecycle.runtime.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

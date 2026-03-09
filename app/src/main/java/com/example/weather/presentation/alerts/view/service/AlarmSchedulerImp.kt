@@ -1,4 +1,4 @@
-package com.example.weather.presentation.alerts.service
+package com.example.weather.presentation.alerts.view.service
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager

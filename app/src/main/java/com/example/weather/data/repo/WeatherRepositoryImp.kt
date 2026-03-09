@@ -11,6 +11,8 @@ import com.example.weather.data.models.weather.WeatherResponse
 import com.example.weather.utils.Constants
 import com.example.weatherapp.data.models.Alerts
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class WeatherRepositoryImp(private val remoteDataSource: NetworkDataSource,
                            private val localDataSource: LocalDataSource): WeatherRepository {

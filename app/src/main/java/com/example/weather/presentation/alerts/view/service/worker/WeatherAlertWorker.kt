@@ -1,4 +1,4 @@
-package com.example.weather.presentation.alerts.service.worker
+package com.example.weather.presentation.alerts.view.service.worker
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,7 +13,7 @@ import com.example.weather.R
 import com.example.weather.utils.MyResult
 import com.example.weather.data.repo.WeatherRepository
 import com.example.weatherapp.data.models.Alerts
-import com.example.weather.presentation.alerts.service.AlarmService
+import com.example.weather.presentation.alerts.view.service.AlarmService
 import com.example.weather.utils.Constants
 
 class WeatherAlertWorker(
